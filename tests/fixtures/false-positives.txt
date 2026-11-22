@@ -1,0 +1,29 @@
+dGhpcyBpcyBhIHRlc3Q=
+password = ""
+CLAUDE_NOTIFY_WEBHOOK=
+aws_secret_access_key="testing"
+akiaiosfodnn7example
+AKIA_PREFIX_IS_NOT_A_KEY
+secret_name = os.environ["SECRET_NAME"]
+api_key: ${API_KEY}
+ORCA_WEB_PASSWORD='...' bash deploy_orca.sh --yes
+    def setup(self, code="the-setup-code", password="한글 암호 password", confirm=None):
+PAIR = "orca://pair?code=eyJ2IjoyLCJlbmRwb2ludCI6IndzczovL2RleGFtcGxlIn0"
+OrcaServerStack.PairingCode    = orca://pair?code=...
+https://<cloudfront-domain>/web-index.html#pairing=orca%3A%2F%2Fpair%3Fcode%3D...&gate-setup=...
+link = f"{web}&gate-setup={code}"
+CODE = "Zk3-setup_code-xyz"
+WEB = "https://dexample.cloudfront.net/web-index.html#pairing=orca%3A%2F%2Fpair%3Fcode%3DeyJ2Ijoy"
+arn:aws:cloudfront::111122223333:key-value-store/abc
+arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+arn:aws:secretsmanager:*:*:secret:*
+arn:aws:iam::<account-id>:role/example
+bash deploy_orca.sh --vpc-id vpc-0123456789abcdef0 --skip-vpc-endpoints --yes
+aws ssm start-session --target <InstanceId> --region ap-northeast-2
+INSTANCE = "i-0abc"
+sha256:291d24f69ec2e281232ed90aae01d901c7ae45af078c3313164aca2b4be410d3
+com.amazonaws.global.cloudfront.origin-facing
+ip-10-0-2-31.ap-northeast-2.compute.internal
+orca-ide-1.4.269.aarch64.rpm
+접속 암호는 파일에 두지 않습니다
+| `X-Custom-Secret` | Secrets Manager가 만든 48자 값 |

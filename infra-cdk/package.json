@@ -1,0 +1,29 @@
+{
+  "name": "my-orca-infra-cdk",
+  "version": "1.0.0",
+  "description": "Orca headless server on EC2 behind CloudFront and ALB - CDK",
+  "private": true,
+  "bin": {
+    "my-orca-infra": "bin/app.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "node test/password-gate.test.mjs && python3 -I test/setup_service_test.py && python3 -I test/pairing_test.py && python3 -I test/host_install_test.py && python3 -I test/upgrade_test.py",
+    "cdk": "cdk",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy --all",
+    "destroy": "cdk destroy --all",
+    "diff": "cdk diff"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.278.0",
+    "constructs": "^10.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "aws-cdk": "^2.1149.0",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.7.3"
+  }
+}

@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1920 1080" width="1920" height="1080" font-family="NanumSquareOTF, '나눔스퀘어OTF', NanumSquare, '나눔스퀘어', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', 'Noto Sans CJK KR', Arial, sans-serif">
+<defs><marker id="ah-arrow" viewBox="0 0 10 10" refX="8.6" refY="5" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0.6 L10,5 L0,9.4 z" fill="#232F3E"/></marker></defs>
+<rect x="0.0" y="0.0" width="1920.0" height="1080.0" fill="#FFFFFF"/>
+<text x="48.0" y="76.0" font-size="42" font-weight="800" fill="#232F3E" letter-spacing="0.2">First Access Procedure</text>
+<text x="48.0" y="115.0"><tspan font-size="21" font-weight="800" fill="#E8710A">From Deploy to the First Session</tspan><tspan font-size="18" font-weight="700" fill="#5F6B7A" dx="16">One link covers password setup, login and pairing</tspan></text>
+<rect x="48.0" y="140.0" width="1824.0" height="306.0" rx="14.0" fill="#F5F7F9" stroke="#DFE4EA" stroke-width="1.2"/>
+<circle cx="82.0" cy="173.0" r="15.0" fill="#232F3E"/>
+<text x="82.0" y="178.6" font-size="16" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="106.0" y="180.0" data-box="48,140,1824,306"><tspan font-size="21" font-weight="800" fill="#232F3E" letter-spacing="0.2">From deploy to the Orca screen</tspan><tspan font-size="15" font-weight="700" fill="#5F6B7A" dx="14">Step 3 is skipped when the password was given at deploy time</tspan></text>
+<rect x="72.0" y="212.0" width="271.0" height="176.0" rx="12.0" fill="#FFFFFF" stroke="#CDD4DD" stroke-width="1.2"/>
+<circle cx="100.0" cy="242.0" r="14.0" fill="#2E8CF0"/>
+<text x="100.0" y="247.5" font-size="15" font-weight="800" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="124.0" y="248.0" font-size="16" font-weight="800" fill="#232F3E" data-box="72,212,271,176">Deploy</text>
+<text x="88.0" y="280.0" font-size="12.5" font-weight="700" fill="#0972D3" font-family="D2Coding, 'D2Coding ligature', Menlo, Consolas, monospace" data-box="72,212,271,176">bash deploy_orca.sh</text>
+<text x="88.0" y="304.0" font-size="13.5" font-weight="700" fill="#2E3A4A" data-box="72,212,271,176">Waits for the server install, then the</text>
+<text x="88.0" y="323.0" font-size="13.5" font-weight="700" fill="#2E3A4A" data-box="72,212,271,176">stack outputs show the pairing link</text>
+<path d="M347.0,300.0 L369.0,300.0" fill="none" stroke="#232F3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah-arrow)"/>
+<rect x="373.0" y="212.0" width="271.0" height="176.0" rx="12.0" fill="#FFFFFF" stroke="#CDD4DD" stroke-width="1.2"/>
+<circle cx="401.0" cy="242.0" r="14.0" fill="#2E8CF0"/>
+<text x="401.0" y="247.5" font-size="15" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="425.0" y="248.0" font-size="16" font-weight="800" fill="#232F3E" data-box="373,212,271,176">Get the link</text>
+<text x="389.0" y="280.0" font-size="12.5" font-weight="700" fill="#0972D3" font-family="D2Coding, 'D2Coding ligature', Menlo, Consolas, monospace" data-box="373,212,271,176">PairingWebLink</text>
+<text x="389.0" y="304.0" font-size="13.5" font-weight="700" fill="#2E3A4A" data-box="373,212,271,176">Use the full link on the last deploy</text>
+<text x="389.0" y="323.0" font-size="13.5" font-weight="700" fill="#2E3A4A" data-box="373,212,271,176">screen, get it again with</text>
+<text x="389.0" y="342.0" font-size="13.5" font-weight="700" fill="#2E3A4A" data-box="373,212,271,176">get_pairing_url.sh</text>
+<path d="M648.0,300.0 L670.0,300.0" fill="none" stroke="#232F3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah-arrow)"/>
+<rect x="674.0" y="212.0" width="271.0" height="176.0" rx="12.0" fill="#FFFFFF" stroke="#CDD4DD" stroke-width="1.2"/>
+<circle cx="702.0" cy="242.0" r="14.0" fill="#FF9900"/>
+<text x="702.0" y="247.5" font-size="15" font-weight="800" fill="#232F3E" text-anchor="middle">3</text>
+<text x="726.0" y="248.0" font-size="16" font-weight="800" fill="#232F3E" data-box="674,212,271,176">Set the password</text>
+<text x="690.0" y="280.0" font-size="12.5" font-weight="700" fill="#E8710A" font-family="D2Coding, 'D2Coding ligature', Menlo, Consolas, monospace" data-box="674,212,271,176">POST /__gate/setup</text>
+<text x="690.0" y="304.0" font-size="13.5" font-weight="700" fill="#2E3A4A" data-box="674,212,271,176">Enter the setup code and the new</text>
+<text x="690.0" y="323.0" font-size="13.5" font-weight="700" fill="#2E3A4A" data-box="674,212,271,176">password twice, the setup service</text>
+<text x="690.0" y="342.0" font-size="13.5" font-weight="700" fill="#2E3A4A" data-box="674,212,271,176">writes the KeyValueStore</text>
+<path d="M949.0,300.0 L971.0,300.0" fill="none" stroke="#232F3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah-arrow)"/>
+<rect x="975.0" y="212.0" width="271.0" height="176.0" rx="12.0" fill="#FFFFFF" stroke="#CDD4DD" stroke-width="1.2"/>
+<circle cx="1003.0" cy="242.0" r="14.0" fill="#FF9900"/>
+<text x="1003.0" y="247.5" font-size="15" font-weight="800" fill="#232F3E" text-anchor="middle">4</text>
+<text x="1027.0" y="248.0" font-size="16" font-weight="800" fill="#232F3E" data-box="975,212,271,176">Log in</text>
+<text x="991.0" y="280.0" font-size="12.5" font-weight="700" fill="#E8710A" font-family="D2Coding, 'D2Coding ligature', Menlo, Consolas, monospace" data-box="975,212,271,176">POST /__gate/login</text>
+<text x="991.0" y="304.0" font-size="13.5" font-weight="700" fill="#2E3A4A" data-box="975,212,271,176">A correct password issues the</text>
+<text x="991.0" y="323.0" font-size="13.5" font-weight="700" fill="#2E3A4A" data-box="975,212,271,176">orca_gate cookie, kept for 7 days</text>
+<path d="M1250.0,300.0 L1272.0,300.0" fill="none" stroke="#232F3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah-arrow)"/>
+<rect x="1276.0" y="212.0" width="271.0" height="176.0" rx="12.0" fill="#FFFFFF" stroke="#CDD4DD" stroke-width="1.2"/>
+<circle cx="1304.0" cy="242.0" r="14.0" fill="#8C4FFF"/>
+<text x="1304.0" y="247.5" font-size="15" font-weight="800" fill="#FFFFFF" text-anchor="middle">5</text>
+<text x="1328.0" y="248.0" font-size="16" font-weight="800" fill="#232F3E" data-box="1276,212,271,176">Pair</text>
+<text x="1292.0" y="280.0" font-size="12.5" font-weight="700" fill="#7D3FE0" font-family="D2Coding, 'D2Coding ligature', Menlo, Consolas, monospace" data-box="1276,212,271,176">#pairing=...</text>
+<text x="1292.0" y="304.0" font-size="13.5" font-weight="700" fill="#2E3A4A" data-box="1276,212,271,176">The pairing code after # registers</text>
+<text x="1292.0" y="323.0" font-size="13.5" font-weight="700" fill="#2E3A4A" data-box="1276,212,271,176">the browser and stores its device key</text>
+<path d="M1551.0,300.0 L1573.0,300.0" fill="none" stroke="#232F3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah-arrow)"/>
+<rect x="1577.0" y="212.0" width="271.0" height="176.0" rx="12.0" fill="#FFFFFF" stroke="#CDD4DD" stroke-width="1.2"/>
+<circle cx="1605.0" cy="242.0" r="14.0" fill="#8C4FFF"/>
+<text x="1605.0" y="247.5" font-size="15" font-weight="800" fill="#FFFFFF" text-anchor="middle">6</text>
+<text x="1629.0" y="248.0" font-size="16" font-weight="800" fill="#232F3E" data-box="1577,212,271,176">Orca screen</text>
+<text x="1593.0" y="280.0" font-size="12.5" font-weight="700" fill="#7D3FE0" font-family="D2Coding, 'D2Coding ligature', Menlo, Consolas, monospace" data-box="1577,212,271,176">WSS :6768</text>
+<text x="1593.0" y="304.0" font-size="13.5" font-weight="700" fill="#2E3A4A" data-box="1577,212,271,176">From then on the CloudFront address</text>
+<text x="1593.0" y="323.0" font-size="13.5" font-weight="700" fill="#2E3A4A" data-box="1577,212,271,176">is enough, the browser remembers</text>
+<text x="1593.0" y="342.0" font-size="13.5" font-weight="700" fill="#2E3A4A" data-box="1577,212,271,176">the pairing</text>
+<text x="72.0" y="419.0" font-size="13" font-weight="800" fill="#5F6B7A" data-box="48,140,1824,306">Handled by</text>
+<rect x="158.4" y="402.0" width="143.3" height="24.0" rx="12.0" fill="#2E8CF0" fill-opacity="0.140" stroke="#0972D3" stroke-width="1.1"/>
+<text x="230.1" y="418.3" font-size="12" font-weight="800" fill="#0972D3" text-anchor="middle" data-box="48,140,1824,306">CDK, CloudFormation</text>
+<rect x="373.0" y="402.0" width="131.9" height="24.0" rx="12.0" fill="#2E8CF0" fill-opacity="0.140" stroke="#0972D3" stroke-width="1.1"/>
+<text x="438.9" y="418.3" font-size="12" font-weight="800" fill="#0972D3" text-anchor="middle" data-box="48,140,1824,306">Stack outputs, SSM</text>
+<rect x="674.0" y="402.0" width="204.8" height="24.0" rx="12.0" fill="#FF9900" fill-opacity="0.140" stroke="#E8710A" stroke-width="1.1"/>
+<text x="776.4" y="418.3" font-size="12" font-weight="800" fill="#E8710A" text-anchor="middle" data-box="48,140,1824,306">CloudFront Function, EC2 :6769</text>
+<rect x="975.0" y="402.0" width="137.4" height="24.0" rx="12.0" fill="#FF9900" fill-opacity="0.140" stroke="#E8710A" stroke-width="1.1"/>
+<text x="1043.7" y="418.3" font-size="12" font-weight="800" fill="#E8710A" text-anchor="middle" data-box="48,140,1824,306">CloudFront Function</text>
+<rect x="1276.0" y="402.0" width="80.7" height="24.0" rx="12.0" fill="#8C4FFF" fill-opacity="0.140" stroke="#7D3FE0" stroke-width="1.1"/>
+<text x="1316.4" y="418.3" font-size="12" font-weight="800" fill="#7D3FE0" text-anchor="middle" data-box="48,140,1824,306">orca-serve</text>
+<rect x="1577.0" y="402.0" width="80.7" height="24.0" rx="12.0" fill="#8C4FFF" fill-opacity="0.140" stroke="#7D3FE0" stroke-width="1.1"/>
+<text x="1617.4" y="418.3" font-size="12" font-weight="800" fill="#7D3FE0" text-anchor="middle" data-box="48,140,1824,306">orca-serve</text>
+<rect x="48.0" y="466.0" width="896.0" height="578.0" rx="14.0" fill="#F5F7F9" stroke="#DFE4EA" stroke-width="1.2"/>
+<circle cx="82.0" cy="499.0" r="15.0" fill="#232F3E"/>
+<text x="82.0" y="504.6" font-size="16" font-weight="800" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="106.0" y="506.0" data-box="48,466,896,578"><tspan font-size="21" font-weight="800" fill="#232F3E" letter-spacing="0.2">What the gate answers</tspan><tspan font-size="15" font-weight="700" fill="#5F6B7A" dx="14">The same request gets a different answer before and after a password is set</tspan></text>
+<rect x="70.0" y="534.0" width="852.0" height="30.0" rx="6.0" fill="#FFFFFF" stroke="#DFE4EA" stroke-width="1"/>
+<text x="82.0" y="554.0" font-size="12.5" font-weight="800" fill="#5F6B7A" data-box="48,466,896,578">State</text>
+<text x="269.4" y="554.0" font-size="12.5" font-weight="800" fill="#5F6B7A" data-box="48,466,896,578">Request</text>
+<text x="533.6" y="554.0" font-size="12.5" font-weight="800" fill="#5F6B7A" data-box="48,466,896,578">Response</text>
+<text x="82.0" y="597.8" font-size="14.5" font-weight="800" fill="#232F3E" data-box="48,466,896,578">No password yet</text>
+<text x="269.4" y="597.8" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="48,466,896,578">HTML request (GET)</text>
+<text x="533.6" y="597.8" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="48,466,896,578">401 with the password setup page</text>
+<line x1="70.0" y1="621.5" x2="922.0" y2="621.5" stroke="#DFE4EA" stroke-width="1" stroke-linecap="round"/>
+<text x="82.0" y="655.2" font-size="14.5" font-weight="800" fill="#232F3E" data-box="48,466,896,578">No password yet</text>
+<text x="269.4" y="655.2" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="48,466,896,578">Any other request, WebSocket</text>
+<text x="533.6" y="655.2" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="48,466,896,578">503</text>
+<line x1="70.0" y1="679.0" x2="922.0" y2="679.0" stroke="#DFE4EA" stroke-width="1" stroke-linecap="round"/>
+<text x="82.0" y="712.8" font-size="14.5" font-weight="800" fill="#232F3E" data-box="48,466,896,578">No password yet</text>
+<text x="269.4" y="712.8" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="48,466,896,578">POST /__gate/setup</text>
+<text x="533.6" y="712.8" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="48,466,896,578">Passed to the setup service, other methods get 405</text>
+<line x1="70.0" y1="736.5" x2="922.0" y2="736.5" stroke="#DFE4EA" stroke-width="1" stroke-linecap="round"/>
+<text x="82.0" y="770.2" font-size="14.5" font-weight="800" fill="#232F3E" data-box="48,466,896,578">Password set</text>
+<text x="269.4" y="770.2" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="48,466,896,578">/__gate/setup</text>
+<text x="533.6" y="770.2" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="48,466,896,578">409</text>
+<line x1="70.0" y1="794.0" x2="922.0" y2="794.0" stroke="#DFE4EA" stroke-width="1" stroke-linecap="round"/>
+<text x="82.0" y="827.8" font-size="14.5" font-weight="800" fill="#232F3E" data-box="48,466,896,578">Password set</text>
+<text x="269.4" y="827.8" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="48,466,896,578">POST /__gate/login</text>
+<text x="533.6" y="817.8" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="48,466,896,578">204 and the cookie when it</text>
+<text x="533.6" y="837.8" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="48,466,896,578">matches, 401 when it does not</text>
+<line x1="70.0" y1="851.5" x2="922.0" y2="851.5" stroke="#DFE4EA" stroke-width="1" stroke-linecap="round"/>
+<text x="82.0" y="885.2" font-size="14.5" font-weight="800" fill="#232F3E" data-box="48,466,896,578">Password set</text>
+<text x="269.4" y="885.2" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="48,466,896,578">Request without a cookie</text>
+<text x="533.6" y="885.2" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="48,466,896,578">401, with the login page for HTML requests</text>
+<line x1="70.0" y1="909.0" x2="922.0" y2="909.0" stroke="#DFE4EA" stroke-width="1" stroke-linecap="round"/>
+<text x="82.0" y="942.8" font-size="14.5" font-weight="800" fill="#232F3E" data-box="48,466,896,578">Password set</text>
+<text x="269.4" y="942.8" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="48,466,896,578">/__gate/logout</text>
+<text x="533.6" y="942.8" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="48,466,896,578">302, cookie removed</text>
+<line x1="70.0" y1="966.5" x2="922.0" y2="966.5" stroke="#DFE4EA" stroke-width="1" stroke-linecap="round"/>
+<text x="82.0" y="1000.2" font-size="14.5" font-weight="800" fill="#232F3E" data-box="48,466,896,578">Valid cookie</text>
+<text x="269.4" y="1000.2" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="48,466,896,578">Every request</text>
+<text x="533.6" y="1000.2" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="48,466,896,578">Forwarded to the origin without the gate cookie</text>
+<line x1="70.0" y1="1024.0" x2="922.0" y2="1024.0" stroke="#DFE4EA" stroke-width="1" stroke-linecap="round"/>
+<rect x="964.0" y="466.0" width="908.0" height="578.0" rx="14.0" fill="#F5F7F9" stroke="#DFE4EA" stroke-width="1.2"/>
+<circle cx="998.0" cy="499.0" r="15.0" fill="#232F3E"/>
+<text x="998.0" y="504.6" font-size="16" font-weight="800" fill="#FFFFFF" text-anchor="middle">3</text>
+<text x="1022.0" y="506.0" data-box="964,466,908,578"><tspan font-size="21" font-weight="800" fill="#232F3E" letter-spacing="0.2">Getting it again and changing it</tspan><tspan font-size="15" font-weight="700" fill="#5F6B7A" dx="14">Run the commands in the repository root</tspan></text>
+<rect x="986.0" y="534.0" width="864.0" height="30.0" rx="6.0" fill="#FFFFFF" stroke="#DFE4EA" stroke-width="1"/>
+<text x="998.0" y="554.0" font-size="12.5" font-weight="800" fill="#5F6B7A" data-box="964,466,908,578">Situation</text>
+<text x="1309.0" y="554.0" font-size="12.5" font-weight="800" fill="#5F6B7A" data-box="964,466,908,578">What to do</text>
+<text x="998.0" y="596.7" font-size="14.5" font-weight="800" fill="#232F3E" data-box="964,466,908,578">The link changed after a server restart</text>
+<text x="1309.0" y="596.7" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="964,466,908,578">bash get_pairing_url.sh</text>
+<line x1="986.0" y1="619.4" x2="1850.0" y2="619.4" stroke="#DFE4EA" stroke-width="1" stroke-linecap="round"/>
+<text x="998.0" y="652.1" font-size="14.5" font-weight="800" fill="#232F3E" data-box="964,466,908,578">The link is gone from the log</text>
+<text x="1309.0" y="652.1" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="964,466,908,578">bash get_pairing_url.sh --restart</text>
+<line x1="986.0" y1="674.9" x2="1850.0" y2="674.9" stroke="#DFE4EA" stroke-width="1" stroke-linecap="round"/>
+<text x="998.0" y="707.6" font-size="14.5" font-weight="800" fill="#232F3E" data-box="964,466,908,578">The link was cut while copying</text>
+<text x="1309.0" y="707.6" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="964,466,908,578">Open the address and type the setup code and the pairing code</text>
+<line x1="986.0" y1="730.3" x2="1850.0" y2="730.3" stroke="#DFE4EA" stroke-width="1" stroke-linecap="round"/>
+<text x="998.0" y="763.0" font-size="14.5" font-weight="800" fill="#232F3E" data-box="964,466,908,578">Change the access password</text>
+<text x="1309.0" y="763.0" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="964,466,908,578">bash set_password.sh, existing sessions end (--keep-sessions keeps them)</text>
+<line x1="986.0" y1="785.7" x2="1850.0" y2="785.7" stroke="#DFE4EA" stroke-width="1" stroke-linecap="round"/>
+<text x="998.0" y="818.4" font-size="14.5" font-weight="800" fill="#232F3E" data-box="964,466,908,578">Lost the access password</text>
+<text x="1309.0" y="818.4" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="964,466,908,578">bash set_password.sh --reset-ui, then open the new setup link</text>
+<line x1="986.0" y1="841.1" x2="1850.0" y2="841.1" stroke="#DFE4EA" stroke-width="1" stroke-linecap="round"/>
+<text x="998.0" y="873.9" font-size="14.5" font-weight="800" fill="#232F3E" data-box="964,466,908,578">Locked after 20 wrong setup codes</text>
+<text x="1309.0" y="873.9" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="964,466,908,578">Restart orca-gate-setup on the server</text>
+<line x1="986.0" y1="896.6" x2="1850.0" y2="896.6" stroke="#DFE4EA" stroke-width="1" stroke-linecap="round"/>
+<text x="998.0" y="929.3" font-size="14.5" font-weight="800" fill="#232F3E" data-box="964,466,908,578">Log out</text>
+<text x="1309.0" y="929.3" font-size="14.5" font-weight="700" fill="#2E3A4A" data-box="964,466,908,578">Open /__gate/logout in the browser</text>
+<line x1="986.0" y1="952.0" x2="1850.0" y2="952.0" stroke="#DFE4EA" stroke-width="1" stroke-linecap="round"/>
+<rect x="986.0" y="966.0" width="864.0" height="58.0" rx="10.0" fill="#FF5C85" fill-opacity="0.080" stroke="#D4245F" stroke-width="1.2"/>
+<text x="1002.0" y="991.0" font-size="15" font-weight="800" fill="#232F3E" data-box="964,466,908,578">Keep the link and the codes off the record</text>
+<text x="1002.0" y="1012.0" font-size="13" font-weight="700" fill="#2E3A4A" data-box="964,466,908,578">The pairing code sits after # in the URL, so CloudFront and ALB logs never see it</text>
+<text x="1872.0" y="1064.0" font-size="13" font-weight="700" fill="#8A94A2" text-anchor="end">As of 2026-11-22, based on infra-cdk/lib/functions/password-gate.js, infra-cdk/lib/gate/setup_service.py and README.md</text>
+</svg>

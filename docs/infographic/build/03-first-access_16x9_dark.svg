@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1920 1080" width="1920" height="1080" font-family="NanumSquareOTF, '나눔스퀘어OTF', NanumSquare, '나눔스퀘어', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', 'Noto Sans CJK KR', Arial, sans-serif">
+<defs><marker id="ah-arrow" viewBox="0 0 10 10" refX="8.6" refY="5" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0.6 L10,5 L0,9.4 z" fill="#A6ABBE"/></marker></defs>
+<rect x="0.0" y="0.0" width="1920.0" height="1080.0" fill="#161D26"/>
+<text x="48.0" y="76.0" font-size="42" font-weight="800" fill="#F3F3F7" letter-spacing="0.2">첫 접속 절차</text>
+<text x="48.0" y="115.0"><tspan font-size="21" font-weight="800" fill="#FF9900">From Deploy to the First Session</tspan><tspan font-size="18" font-weight="700" fill="#A6ABBE" dx="16">링크 하나로 암호 설정, 로그인, 페어링까지</tspan></text>
+<rect x="48.0" y="140.0" width="1824.0" height="306.0" rx="14.0" fill="#1C2430" stroke="#2E3947" stroke-width="1.2"/>
+<circle cx="82.0" cy="173.0" r="15.0" fill="#E2E4EC"/>
+<text x="82.0" y="178.6" font-size="16" font-weight="800" fill="#161D26" text-anchor="middle">1</text>
+<text x="106.0" y="180.0" data-box="48,140,1824,306"><tspan font-size="21" font-weight="800" fill="#F3F3F7" letter-spacing="0.2">배포부터 Orca 화면까지</tspan><tspan font-size="15" font-weight="700" fill="#A6ABBE" dx="14">배포할 때 암호를 정했으면 3단계는 생략</tspan></text>
+<rect x="72.0" y="212.0" width="271.0" height="176.0" rx="12.0" fill="#232D3A" stroke="#3B4757" stroke-width="1.2"/>
+<circle cx="100.0" cy="242.0" r="14.0" fill="#41B3FF"/>
+<text x="100.0" y="247.5" font-size="15" font-weight="800" fill="#161D26" text-anchor="middle">1</text>
+<text x="124.0" y="248.0" font-size="16" font-weight="800" fill="#F3F3F7" data-box="72,212,271,176">배포</text>
+<text x="88.0" y="280.0" font-size="12.5" font-weight="700" fill="#41B3FF" font-family="D2Coding, 'D2Coding ligature', Menlo, Consolas, monospace" data-box="72,212,271,176">bash deploy_orca.sh</text>
+<text x="88.0" y="304.0" font-size="13.5" font-weight="700" fill="#E2E4EC" data-box="72,212,271,176">서버 설치가 끝날 때까지 대기,</text>
+<text x="88.0" y="323.0" font-size="13.5" font-weight="700" fill="#E2E4EC" data-box="72,212,271,176">끝나면 스택 출력에 페어링 링크 표시</text>
+<path d="M347.0,300.0 L369.0,300.0" fill="none" stroke="#A6ABBE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah-arrow)"/>
+<rect x="373.0" y="212.0" width="271.0" height="176.0" rx="12.0" fill="#232D3A" stroke="#3B4757" stroke-width="1.2"/>
+<circle cx="401.0" cy="242.0" r="14.0" fill="#41B3FF"/>
+<text x="401.0" y="247.5" font-size="15" font-weight="800" fill="#161D26" text-anchor="middle">2</text>
+<text x="425.0" y="248.0" font-size="16" font-weight="800" fill="#F3F3F7" data-box="373,212,271,176">링크 받기</text>
+<text x="389.0" y="280.0" font-size="12.5" font-weight="700" fill="#41B3FF" font-family="D2Coding, 'D2Coding ligature', Menlo, Consolas, monospace" data-box="373,212,271,176">PairingWebLink</text>
+<text x="389.0" y="304.0" font-size="13.5" font-weight="700" fill="#E2E4EC" data-box="373,212,271,176">배포 마지막 화면의 전체 링크 사용,</text>
+<text x="389.0" y="323.0" font-size="13.5" font-weight="700" fill="#E2E4EC" data-box="373,212,271,176">다시 받을 때는 get_pairing_url.sh</text>
+<path d="M648.0,300.0 L670.0,300.0" fill="none" stroke="#A6ABBE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah-arrow)"/>
+<rect x="674.0" y="212.0" width="271.0" height="176.0" rx="12.0" fill="#232D3A" stroke="#3B4757" stroke-width="1.2"/>
+<circle cx="702.0" cy="242.0" r="14.0" fill="#FF9900"/>
+<text x="702.0" y="247.5" font-size="15" font-weight="800" fill="#161D26" text-anchor="middle">3</text>
+<text x="726.0" y="248.0" font-size="16" font-weight="800" fill="#F3F3F7" data-box="674,212,271,176">암호 설정</text>
+<text x="690.0" y="280.0" font-size="12.5" font-weight="700" fill="#FF9900" font-family="D2Coding, 'D2Coding ligature', Menlo, Consolas, monospace" data-box="674,212,271,176">POST /__gate/setup</text>
+<text x="690.0" y="304.0" font-size="13.5" font-weight="700" fill="#E2E4EC" data-box="674,212,271,176">설정 코드, 새 암호, 확인 암호 입력,</text>
+<text x="690.0" y="323.0" font-size="13.5" font-weight="700" fill="#E2E4EC" data-box="674,212,271,176">설정 서비스가 KeyValueStore에 저장</text>
+<path d="M949.0,300.0 L971.0,300.0" fill="none" stroke="#A6ABBE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah-arrow)"/>
+<rect x="975.0" y="212.0" width="271.0" height="176.0" rx="12.0" fill="#232D3A" stroke="#3B4757" stroke-width="1.2"/>
+<circle cx="1003.0" cy="242.0" r="14.0" fill="#FF9900"/>
+<text x="1003.0" y="247.5" font-size="15" font-weight="800" fill="#161D26" text-anchor="middle">4</text>
+<text x="1027.0" y="248.0" font-size="16" font-weight="800" fill="#F3F3F7" data-box="975,212,271,176">로그인</text>
+<text x="991.0" y="280.0" font-size="12.5" font-weight="700" fill="#FF9900" font-family="D2Coding, 'D2Coding ligature', Menlo, Consolas, monospace" data-box="975,212,271,176">POST /__gate/login</text>
+<text x="991.0" y="304.0" font-size="13.5" font-weight="700" fill="#E2E4EC" data-box="975,212,271,176">암호가 맞으면 orca_gate</text>
+<text x="991.0" y="323.0" font-size="13.5" font-weight="700" fill="#E2E4EC" data-box="975,212,271,176">쿠키 발급, 7일 동안 유지</text>
+<path d="M1250.0,300.0 L1272.0,300.0" fill="none" stroke="#A6ABBE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah-arrow)"/>
+<rect x="1276.0" y="212.0" width="271.0" height="176.0" rx="12.0" fill="#232D3A" stroke="#3B4757" stroke-width="1.2"/>
+<circle cx="1304.0" cy="242.0" r="14.0" fill="#AD5CFF"/>
+<text x="1304.0" y="247.5" font-size="15" font-weight="800" fill="#161D26" text-anchor="middle">5</text>
+<text x="1328.0" y="248.0" font-size="16" font-weight="800" fill="#F3F3F7" data-box="1276,212,271,176">페어링</text>
+<text x="1292.0" y="280.0" font-size="12.5" font-weight="700" fill="#AD5CFF" font-family="D2Coding, 'D2Coding ligature', Menlo, Consolas, monospace" data-box="1276,212,271,176">#pairing=...</text>
+<text x="1292.0" y="304.0" font-size="13.5" font-weight="700" fill="#E2E4EC" data-box="1276,212,271,176">링크의 # 뒤에 있는 페어링 코드로</text>
+<text x="1292.0" y="323.0" font-size="13.5" font-weight="700" fill="#E2E4EC" data-box="1276,212,271,176">브라우저 등록, 디바이스 키 저장</text>
+<path d="M1551.0,300.0 L1573.0,300.0" fill="none" stroke="#A6ABBE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah-arrow)"/>
+<rect x="1577.0" y="212.0" width="271.0" height="176.0" rx="12.0" fill="#232D3A" stroke="#3B4757" stroke-width="1.2"/>
+<circle cx="1605.0" cy="242.0" r="14.0" fill="#AD5CFF"/>
+<text x="1605.0" y="247.5" font-size="15" font-weight="800" fill="#161D26" text-anchor="middle">6</text>
+<text x="1629.0" y="248.0" font-size="16" font-weight="800" fill="#F3F3F7" data-box="1577,212,271,176">Orca 화면</text>
+<text x="1593.0" y="280.0" font-size="12.5" font-weight="700" fill="#AD5CFF" font-family="D2Coding, 'D2Coding ligature', Menlo, Consolas, monospace" data-box="1577,212,271,176">WSS :6768</text>
+<text x="1593.0" y="304.0" font-size="13.5" font-weight="700" fill="#E2E4EC" data-box="1577,212,271,176">이후에는 CloudFront 주소만 열면</text>
+<text x="1593.0" y="323.0" font-size="13.5" font-weight="700" fill="#E2E4EC" data-box="1577,212,271,176">접속, 페어링은 브라우저가 기억</text>
+<text x="72.0" y="419.0" font-size="13" font-weight="800" fill="#A6ABBE" data-box="48,140,1824,306">처리하는 곳</text>
+<rect x="150.4" y="402.0" width="143.3" height="24.0" rx="12.0" fill="#41B3FF" fill-opacity="0.140" stroke="#41B3FF" stroke-width="1.1"/>
+<text x="222.0" y="418.3" font-size="12" font-weight="800" fill="#41B3FF" text-anchor="middle" data-box="48,140,1824,306">CDK, CloudFormation</text>
+<rect x="373.0" y="402.0" width="97.3" height="24.0" rx="12.0" fill="#41B3FF" fill-opacity="0.140" stroke="#41B3FF" stroke-width="1.1"/>
+<text x="421.7" y="418.3" font-size="12" font-weight="800" fill="#41B3FF" text-anchor="middle" data-box="48,140,1824,306">스택 출력, SSM</text>
+<rect x="674.0" y="402.0" width="204.8" height="24.0" rx="12.0" fill="#FF9900" fill-opacity="0.140" stroke="#FF9900" stroke-width="1.1"/>
+<text x="776.4" y="418.3" font-size="12" font-weight="800" fill="#FF9900" text-anchor="middle" data-box="48,140,1824,306">CloudFront Function, EC2 :6769</text>
+<rect x="975.0" y="402.0" width="137.4" height="24.0" rx="12.0" fill="#FF9900" fill-opacity="0.140" stroke="#FF9900" stroke-width="1.1"/>
+<text x="1043.7" y="418.3" font-size="12" font-weight="800" fill="#FF9900" text-anchor="middle" data-box="48,140,1824,306">CloudFront Function</text>
+<rect x="1276.0" y="402.0" width="80.7" height="24.0" rx="12.0" fill="#AD5CFF" fill-opacity="0.140" stroke="#AD5CFF" stroke-width="1.1"/>
+<text x="1316.4" y="418.3" font-size="12" font-weight="800" fill="#AD5CFF" text-anchor="middle" data-box="48,140,1824,306">orca-serve</text>
+<rect x="1577.0" y="402.0" width="80.7" height="24.0" rx="12.0" fill="#AD5CFF" fill-opacity="0.140" stroke="#AD5CFF" stroke-width="1.1"/>
+<text x="1617.4" y="418.3" font-size="12" font-weight="800" fill="#AD5CFF" text-anchor="middle" data-box="48,140,1824,306">orca-serve</text>
+<rect x="48.0" y="466.0" width="896.0" height="578.0" rx="14.0" fill="#1C2430" stroke="#2E3947" stroke-width="1.2"/>
+<circle cx="82.0" cy="499.0" r="15.0" fill="#E2E4EC"/>
+<text x="82.0" y="504.6" font-size="16" font-weight="800" fill="#161D26" text-anchor="middle">2</text>
+<text x="106.0" y="506.0" data-box="48,466,896,578"><tspan font-size="21" font-weight="800" fill="#F3F3F7" letter-spacing="0.2">게이트의 응답</tspan><tspan font-size="15" font-weight="700" fill="#A6ABBE" dx="14">같은 요청도 암호를 정하기 전과 뒤에 응답이 다름</tspan></text>
+<rect x="70.0" y="534.0" width="852.0" height="30.0" rx="6.0" fill="#232D3A" stroke="#2E3947" stroke-width="1"/>
+<text x="82.0" y="554.0" font-size="12.5" font-weight="800" fill="#A6ABBE" data-box="48,466,896,578">상태</text>
+<text x="269.4" y="554.0" font-size="12.5" font-weight="800" fill="#A6ABBE" data-box="48,466,896,578">요청</text>
+<text x="533.6" y="554.0" font-size="12.5" font-weight="800" fill="#A6ABBE" data-box="48,466,896,578">응답</text>
+<text x="82.0" y="597.8" font-size="14.5" font-weight="800" fill="#F3F3F7" data-box="48,466,896,578">암호를 정하기 전</text>
+<text x="269.4" y="597.8" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="48,466,896,578">HTML 요청 (GET)</text>
+<text x="533.6" y="597.8" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="48,466,896,578">401, 암호 설정 화면</text>
+<line x1="70.0" y1="621.5" x2="922.0" y2="621.5" stroke="#2E3947" stroke-width="1" stroke-linecap="round"/>
+<text x="82.0" y="655.2" font-size="14.5" font-weight="800" fill="#F3F3F7" data-box="48,466,896,578">암호를 정하기 전</text>
+<text x="269.4" y="655.2" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="48,466,896,578">그 밖의 요청, WebSocket</text>
+<text x="533.6" y="655.2" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="48,466,896,578">503</text>
+<line x1="70.0" y1="679.0" x2="922.0" y2="679.0" stroke="#2E3947" stroke-width="1" stroke-linecap="round"/>
+<text x="82.0" y="712.8" font-size="14.5" font-weight="800" fill="#F3F3F7" data-box="48,466,896,578">암호를 정하기 전</text>
+<text x="269.4" y="712.8" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="48,466,896,578">POST /__gate/setup</text>
+<text x="533.6" y="712.8" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="48,466,896,578">설정 서비스로 전달, 다른 메서드는 405</text>
+<line x1="70.0" y1="736.5" x2="922.0" y2="736.5" stroke="#2E3947" stroke-width="1" stroke-linecap="round"/>
+<text x="82.0" y="770.2" font-size="14.5" font-weight="800" fill="#F3F3F7" data-box="48,466,896,578">암호를 정한 뒤</text>
+<text x="269.4" y="770.2" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="48,466,896,578">/__gate/setup</text>
+<text x="533.6" y="770.2" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="48,466,896,578">409</text>
+<line x1="70.0" y1="794.0" x2="922.0" y2="794.0" stroke="#2E3947" stroke-width="1" stroke-linecap="round"/>
+<text x="82.0" y="827.8" font-size="14.5" font-weight="800" fill="#F3F3F7" data-box="48,466,896,578">암호를 정한 뒤</text>
+<text x="269.4" y="827.8" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="48,466,896,578">POST /__gate/login</text>
+<text x="533.6" y="827.8" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="48,466,896,578">암호가 맞으면 204와 쿠키, 틀리면 401</text>
+<line x1="70.0" y1="851.5" x2="922.0" y2="851.5" stroke="#2E3947" stroke-width="1" stroke-linecap="round"/>
+<text x="82.0" y="885.2" font-size="14.5" font-weight="800" fill="#F3F3F7" data-box="48,466,896,578">암호를 정한 뒤</text>
+<text x="269.4" y="885.2" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="48,466,896,578">쿠키 없는 요청</text>
+<text x="533.6" y="885.2" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="48,466,896,578">401, HTML 요청에는 로그인 화면</text>
+<line x1="70.0" y1="909.0" x2="922.0" y2="909.0" stroke="#2E3947" stroke-width="1" stroke-linecap="round"/>
+<text x="82.0" y="942.8" font-size="14.5" font-weight="800" fill="#F3F3F7" data-box="48,466,896,578">암호를 정한 뒤</text>
+<text x="269.4" y="942.8" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="48,466,896,578">/__gate/logout</text>
+<text x="533.6" y="942.8" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="48,466,896,578">302, 쿠키 삭제</text>
+<line x1="70.0" y1="966.5" x2="922.0" y2="966.5" stroke="#2E3947" stroke-width="1" stroke-linecap="round"/>
+<text x="82.0" y="1000.2" font-size="14.5" font-weight="800" fill="#F3F3F7" data-box="48,466,896,578">쿠키가 유효함</text>
+<text x="269.4" y="1000.2" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="48,466,896,578">모든 요청</text>
+<text x="533.6" y="1000.2" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="48,466,896,578">게이트 쿠키를 빼고 오리진으로 전달</text>
+<line x1="70.0" y1="1024.0" x2="922.0" y2="1024.0" stroke="#2E3947" stroke-width="1" stroke-linecap="round"/>
+<rect x="964.0" y="466.0" width="908.0" height="578.0" rx="14.0" fill="#1C2430" stroke="#2E3947" stroke-width="1.2"/>
+<circle cx="998.0" cy="499.0" r="15.0" fill="#E2E4EC"/>
+<text x="998.0" y="504.6" font-size="16" font-weight="800" fill="#161D26" text-anchor="middle">3</text>
+<text x="1022.0" y="506.0" data-box="964,466,908,578"><tspan font-size="21" font-weight="800" fill="#F3F3F7" letter-spacing="0.2">다시 받을 때와 바꿀 때</tspan><tspan font-size="15" font-weight="700" fill="#A6ABBE" dx="14">명령은 저장소 루트에서 실행</tspan></text>
+<rect x="986.0" y="534.0" width="864.0" height="30.0" rx="6.0" fill="#232D3A" stroke="#2E3947" stroke-width="1"/>
+<text x="998.0" y="554.0" font-size="12.5" font-weight="800" fill="#A6ABBE" data-box="964,466,908,578">상황</text>
+<text x="1309.0" y="554.0" font-size="12.5" font-weight="800" fill="#A6ABBE" data-box="964,466,908,578">방법</text>
+<text x="998.0" y="596.7" font-size="14.5" font-weight="800" fill="#F3F3F7" data-box="964,466,908,578">서버를 재시작해 링크가 바뀜</text>
+<text x="1309.0" y="596.7" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="964,466,908,578">bash get_pairing_url.sh</text>
+<line x1="986.0" y1="619.4" x2="1850.0" y2="619.4" stroke="#2E3947" stroke-width="1" stroke-linecap="round"/>
+<text x="998.0" y="652.1" font-size="14.5" font-weight="800" fill="#F3F3F7" data-box="964,466,908,578">로그에서 링크가 사라짐</text>
+<text x="1309.0" y="652.1" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="964,466,908,578">bash get_pairing_url.sh --restart</text>
+<line x1="986.0" y1="674.9" x2="1850.0" y2="674.9" stroke="#2E3947" stroke-width="1" stroke-linecap="round"/>
+<text x="998.0" y="707.6" font-size="14.5" font-weight="800" fill="#F3F3F7" data-box="964,466,908,578">링크가 복사 중에 잘림</text>
+<text x="1309.0" y="707.6" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="964,466,908,578">접속 주소를 열고 설정 코드와 페어링 코드를 직접 입력</text>
+<line x1="986.0" y1="730.3" x2="1850.0" y2="730.3" stroke="#2E3947" stroke-width="1" stroke-linecap="round"/>
+<text x="998.0" y="763.0" font-size="14.5" font-weight="800" fill="#F3F3F7" data-box="964,466,908,578">접속 암호 변경</text>
+<text x="1309.0" y="763.0" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="964,466,908,578">bash set_password.sh, 기존 세션은 만료 (--keep-sessions로 유지)</text>
+<line x1="986.0" y1="785.7" x2="1850.0" y2="785.7" stroke="#2E3947" stroke-width="1" stroke-linecap="round"/>
+<text x="998.0" y="818.4" font-size="14.5" font-weight="800" fill="#F3F3F7" data-box="964,466,908,578">접속 암호 분실</text>
+<text x="1309.0" y="818.4" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="964,466,908,578">bash set_password.sh --reset-ui 뒤 새 설정 링크로 접속</text>
+<line x1="986.0" y1="841.1" x2="1850.0" y2="841.1" stroke="#2E3947" stroke-width="1" stroke-linecap="round"/>
+<text x="998.0" y="873.9" font-size="14.5" font-weight="800" fill="#F3F3F7" data-box="964,466,908,578">설정 코드 오입력 20회로 잠김</text>
+<text x="1309.0" y="873.9" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="964,466,908,578">서버에서 orca-gate-setup 재시작</text>
+<line x1="986.0" y1="896.6" x2="1850.0" y2="896.6" stroke="#2E3947" stroke-width="1" stroke-linecap="round"/>
+<text x="998.0" y="929.3" font-size="14.5" font-weight="800" fill="#F3F3F7" data-box="964,466,908,578">로그아웃</text>
+<text x="1309.0" y="929.3" font-size="14.5" font-weight="700" fill="#E2E4EC" data-box="964,466,908,578">브라우저에서 /__gate/logout 열기</text>
+<line x1="986.0" y1="952.0" x2="1850.0" y2="952.0" stroke="#2E3947" stroke-width="1" stroke-linecap="round"/>
+<rect x="986.0" y="966.0" width="864.0" height="58.0" rx="10.0" fill="#FF5C85" fill-opacity="0.080" stroke="#FF5C85" stroke-width="1.2"/>
+<text x="1002.0" y="991.0" font-size="15" font-weight="800" fill="#F3F3F7" data-box="964,466,908,578">링크와 코드는 화면 밖에 남기지 않기</text>
+<text x="1002.0" y="1012.0" font-size="13" font-weight="700" fill="#E2E4EC" data-box="964,466,908,578">페어링 코드는 URL의 # 뒤에 있어 CloudFront와 ALB의 로그에 남지 않음</text>
+<text x="1872.0" y="1064.0" font-size="13" font-weight="700" fill="#7B8198" text-anchor="end">2026-11-22 기준, 근거는 infra-cdk/lib/functions/password-gate.js, infra-cdk/lib/gate/setup_service.py, README.md</text>
+</svg>

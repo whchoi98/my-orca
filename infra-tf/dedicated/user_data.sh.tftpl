@@ -1,0 +1,200 @@
+#!/bin/bash
+set -euxo pipefail
+install -d -m 700 /opt/orca-bootstrap
+install -d -m 755 /var/lib/orca-bootstrap
+cat > /opt/orca-bootstrap/setup.sh <<'SETUP_EOF'
+#!/bin/bash
+set -euxo pipefail
+exec > >(tee -a /var/log/user-data.log) 2>&1
+export HOME=/root
+echo "Starting Orca Server setup at $(date)"
+ARCH=$(uname -m)
+
+# System update
+dnf update -y --allowerasing
+dnf install -y --allowerasing curl jq tar gzip unzip wget git tmux python3 python3-pip
+# bedrock-agentcore needs Python >= 3.10; AL2023 python3 is 3.9, so do not fail the setup on it
+pip3 install boto3 click || echo "[WARN] pip install boto3/click failed"
+pip3 install bedrock-agentcore || echo "[WARN] bedrock-agentcore needs Python >= 3.10 (AL2023 python3 is 3.9)"
+
+# Development tools (required for native npm modules on ARM64)
+dnf groupinstall -y "Development Tools" || dnf install -y gcc gcc-c++ make || echo "[WARN] Dev tools install failed"
+
+# Node.js 22 LTS (Node 20 reached end of life in 2026-04)
+curl -fsSL https://rpm.nodesource.com/setup_22.x | bash - || true
+dnf install -y nodejs || true
+if ! command -v node &>/dev/null || [ "$(node -v | cut -d. -f1 | tr -d v)" -lt 22 ]; then
+  curl -fsSL https://fnm.vercel.app/install | bash
+  export FNM_DIR="/root/.local/share/fnm"
+  export PATH="$FNM_DIR:$PATH"
+  eval "$(fnm env)"
+  fnm install 22 && fnm use 22
+  ln -sf "$(which node)" /usr/local/bin/node
+  ln -sf "$(which npm)" /usr/local/bin/npm
+  ln -sf "$(which npx)" /usr/local/bin/npx
+fi
+echo "Node.js version: $(node -v)"
+
+# AWS CLI v2
+cd /tmp
+rm -rf aws awscliv2.zip
+curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-$${ARCH}.zip" -o awscliv2.zip
+unzip -oq awscliv2.zip && ./aws/install --update && rm -rf aws awscliv2.zip
+
+# SSM Plugin
+if [ "$ARCH" = "aarch64" ]; then
+  dnf install -y https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_arm64/session-manager-plugin.rpm
+else
+  dnf install -y https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm
+fi
+
+# Docker
+dnf install -y docker
+systemctl enable docker && systemctl start docker
+usermod -aG docker ec2-user
+
+# uv package manager (for ec2-user: ~/.local/bin)
+sudo -u ec2-user -H bash -c "set -o pipefail; curl -fsSL https://astral.sh/uv/install.sh | sh" || echo "[WARN] uv install failed"
+
+# Kiro CLI
+cd /home/ec2-user
+if [ "$ARCH" = "aarch64" ]; then
+  KIRO_ZIP="kirocli-aarch64-linux.zip"
+else
+  KIRO_ZIP="kirocli-x86_64-linux.zip"
+fi
+rm -rf kirocli kirocli.zip
+if curl --proto "=https" --tlsv1.2 -sSf "https://desktop-release.q.us-east-1.amazonaws.com/latest/$${KIRO_ZIP}" -o kirocli.zip; then
+  unzip -oq kirocli.zip
+  if [ -d "kirocli/bin" ]; then
+    chmod +x kirocli/bin/*
+    cp kirocli/bin/* /usr/local/bin/
+    echo "kiro-cli installed successfully"
+  fi
+  rm -rf kirocli kirocli.zip
+else
+  echo "[WARN] kiro-cli download failed"
+fi
+
+# Claude Code CLI: native installer as ec2-user (~/.local/bin, auto-updates without sudo)
+CLAUDE_INSTALL="set -o pipefail; curl -fsSL https://claude.ai/install.sh | bash"
+sudo -u ec2-user -H bash -c "$CLAUDE_INSTALL" || {
+  echo "[WARN] Claude Code CLI install failed, retrying..."
+  sleep 10
+  sudo -u ec2-user -H bash -c "$CLAUDE_INSTALL" || echo "[WARN] Claude Code CLI install failed after retry"
+}
+
+# Codex CLI: user npm prefix (~/.npm-global), same layout as ec2_vscode codex-cli-setup
+sudo -u ec2-user -H bash -c 'npm install --global --prefix "$HOME/.npm-global" @openai/codex@latest' || echo "[WARN] Codex CLI install failed"
+CODEX_PATH_LINE='export PATH="$HOME/.npm-global/bin:$PATH"'
+grep -Fqx -- "$CODEX_PATH_LINE" /home/ec2-user/.bashrc || printf '\n# Codex CLI user installation\n%s\n' "$CODEX_PATH_LINE" >> /home/ec2-user/.bashrc
+
+# CloudWatch agent
+cd /tmp
+rm -f amazon-cloudwatch-agent.rpm
+if [ "$ARCH" = "aarch64" ]; then
+  wget -q https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/arm64/latest/amazon-cloudwatch-agent.rpm || true
+else
+  wget -q https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm || true
+fi
+[ -f amazon-cloudwatch-agent.rpm ] && rpm -U --replacepkgs ./amazon-cloudwatch-agent.rpm || true
+rm -f amazon-cloudwatch-agent.rpm
+
+# ec2_vscode helper scripts (claude-code-setup, kiro-cli-setup, codex-cli-setup)
+[ -d /home/ec2-user/ec2_vscode ] || sudo -u ec2-user -H git clone --depth 1 https://github.com/whchoi98/ec2_vscode.git /home/ec2-user/ec2_vscode || echo "[WARN] ec2_vscode clone failed"
+
+# ---------------- Orca ----------------
+# Runtime deps from the orca-ide RPM. xdotool and xclip are not in the AL2023
+# repositories; they are only used by desktop control (orca computer) and file
+# clipboard copy, so the RPM is installed with --nodeps below.
+dnf install -y gtk3 libnotify nss libXScrnSaver libXtst xdg-utils at-spi2-core libuuid alsa-lib python3-gobject xorg-x11-server-Xvfb dbus-tools
+ORCA_VERSION="${orca_version}"
+if [ "$ARCH" = "aarch64" ]; then ORCA_RPM_ARCH=aarch64; else ORCA_RPM_ARCH=x86_64; fi
+if [ "$(rpm -q --qf "%%{VERSION}" orca-ide 2>/dev/null || true)" != "$ORCA_VERSION" ]; then
+  curl -fL --retry 3 -o /tmp/orca-ide.rpm "https://github.com/stablyai/orca/releases/download/v$${ORCA_VERSION}/orca-ide-$${ORCA_VERSION}.$${ORCA_RPM_ARCH}.rpm"
+  rpm -Uvh --nodeps /tmp/orca-ide.rpm
+  rm -f /tmp/orca-ide.rpm
+fi
+sudo -u ec2-user -H /usr/bin/orca-ide --version
+
+# A user manager for ec2-user lets Orca put each terminal in its own systemd user scope.
+EC2_UID=$(id -u ec2-user)
+loginctl enable-linger ec2-user
+install -d -m 755 /etc/orca
+cat > /etc/orca/serve.env <<'ENVEOF'
+# orca-serve.service environment. Edit, then: sudo systemctl restart orca-serve
+# Address embedded in pairing links (the CloudFront domain of this stack).
+ORCA_PAIRING_ADDRESS=${pairing_address}
+AWS_REGION=${region}
+ORCA_TELEMETRY_DISABLED=1
+# Agents started from Orca chat inherit this environment (it does not read ~/.bashrc).
+# CLAUDE_CODE_USE_BEDROCK=1
+ENVEOF
+cat > /etc/systemd/system/orca-serve.service <<UNITEOF
+[Unit]
+Description=Orca headless server (orca-ide serve)
+Wants=network-online.target user@$${EC2_UID}.service
+After=network-online.target user@$${EC2_UID}.service
+StartLimitIntervalSec=900
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/home/ec2-user
+EnvironmentFile=/etc/orca/serve.env
+Environment=PATH=/home/ec2-user/.local/bin:/home/ec2-user/.npm-global/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin
+Environment=XDG_RUNTIME_DIR=/run/user/$${EC2_UID}
+Environment=ORCA_USER_DATA_PATH=/home/ec2-user/.config/orca
+# Not orca serve service install: that unit adds --no-pairing, and this release has no
+# orca pair command, so the pairing link printed at start is the only way to pair.
+# No --supervise either: supervised serve hides the pairing link when stdout is not a
+# TTY (journald), so systemd Restart= takes over restarts.
+ExecStart=/usr/bin/orca-ide serve --port ${orca_port} --bind 0.0.0.0 --pairing-address \$${ORCA_PAIRING_ADDRESS}
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=90
+# The terminal daemon outlives orca serve restarts, as in the upstream service unit.
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
+UNITEOF
+systemctl daemon-reload && systemctl enable orca-serve && systemctl restart orca-serve
+
+%{ if gate_enabled ~}
+# Password gate first-login setup service (CDK asset: lib/gate)
+/usr/local/bin/aws s3 cp --region ${region} "${gate_bundle_url}" /tmp/orca-gate.zip
+rm -rf /opt/orca-gate-src && mkdir -p /opt/orca-gate-src
+unzip -oq /tmp/orca-gate.zip -d /opt/orca-gate-src && rm -f /tmp/orca-gate.zip
+bash /opt/orca-gate-src/install.sh "${gate_kvs_arn}" "${region}"
+
+%{ endif ~}
+# Done: orca-bootstrap.service is skipped on later boots
+touch /var/lib/orca-bootstrap/done
+echo "Orca Server setup completed at $(date)"
+SETUP_EOF
+chmod 700 /opt/orca-bootstrap/setup.sh
+cat > /etc/systemd/system/orca-bootstrap.service <<'UNIT_EOF'
+[Unit]
+Description=Orca Server setup (re-runs on each boot until done)
+Wants=network-online.target
+After=network-online.target cloud-final.service
+ConditionPathExists=!/var/lib/orca-bootstrap/done
+StartLimitIntervalSec=1h
+StartLimitBurst=5
+
+[Service]
+Type=oneshot
+ExecStart=/opt/orca-bootstrap/setup.sh
+TimeoutStartSec=0
+Restart=on-failure
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target
+UNIT_EOF
+systemctl daemon-reload
+systemctl enable orca-bootstrap.service
+# --no-block: the unit is ordered after cloud-final, which is running this script
+systemctl start --no-block orca-bootstrap.service
