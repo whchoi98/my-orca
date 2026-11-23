@@ -6,6 +6,8 @@
 .env.*
 !.env.example
 .claude/settings.local.json
+# Claude Code가 만드는 연결된 작업 트리. git add가 집어 가면 안 된다.
+.claude/worktrees/
 
 # 배포 출력에는 페어링 링크와 설정 코드가 평문으로 들어 있다.
 cdk-outputs.json

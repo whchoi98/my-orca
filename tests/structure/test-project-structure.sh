@@ -556,7 +556,7 @@ assert_eq "만든 문서와 도구에 계정 ID, CloudFront 도메인, 인스턴
 
 # --- .gitignore와 .env.example ---
 ST_IGNORE=$(cat .gitignore)
-for ST_RULE in ".env" ".env.*" "!.env.example" ".claude/settings.local.json" "node_modules/" "cdk-outputs.json" \
+for ST_RULE in ".env" ".env.*" "!.env.example" ".claude/settings.local.json" ".claude/worktrees/" "node_modules/" "cdk-outputs.json" \
                "infra-cdk/cdk.out/" "infra-cdk/cdk.context.json" "__pycache__/" "/orca/" \
                "infra-tf/**/.terraform/" "infra-tf/**/*.tfstate" "infra-tf/**/*.tfstate.*" "infra-tf/**/*.tfvars" \
                "infra-tf/**/*.tfvars.json" "infra-tf/**/*.tfplan" "infra-tf/**/.build/"; do
@@ -569,6 +569,7 @@ git -C "$ST_IGN" init -q
 cp .gitignore "$ST_IGN/.gitignore"
 for ST_PATH in .env .env.local cdk-outputs.json infra-cdk/cdk.context.json infra-cdk/cdk.out/manifest.json infra-cdk/lib/orca-stack.js \
                infra-cdk/lib/host/__pycache__/handler.cpython-39.pyc .claude/settings.local.json orca/README.md \
+               .claude/worktrees/feature/README.md \
                infra-tf/attach/terraform.tfstate infra-tf/attach/terraform.tfstate.backup infra-tf/attach/.terraform.tfstate.lock.info \
                infra-tf/dedicated/.terraform/providers/x infra-tf/attach/orca.auto.tfvars.json infra-tf/dedicated/terraform.tfvars \
                infra-tf/dedicated/orca.tfplan infra-tf/modules/front-door/.build/gate.zip; do

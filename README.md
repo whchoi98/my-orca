@@ -34,7 +34,7 @@ The figure shows the path of a request and what each boundary refuses. It follow
   <img src="docs/infographic/build/01-access-path-en_16x9_light.png" alt="Access path and protection layers: the browser, CloudFront with the password gate function and KeyValueStore, the ALB that checks the X-Custom-Secret header, and orca-serve on a private EC2 instance, with the two access steps and where each secret is kept">
 </picture>
 
-```
+```text
 User ──HTTPS/WSS──> CloudFront ──HTTP:80 + X-Custom-Secret──> ALB ──HTTP/WS:6768──> EC2 (private subnet)
                     [password gate]  (SG: CloudFront prefix list only)   (SG: ALB SG only)   orca-ide serve
                     CloudFront Function + KeyValueStore
@@ -115,6 +115,8 @@ The `orca-ide` RPM requires `xdotool` and `xclip`, but the AL2023 repositories d
 ### 1. Prepare the Working Environment
 
 ```bash
+git clone https://github.com/whchoi98/my-orca.git
+cd my-orca
 bash scripts/setup.sh
 ```
 
@@ -139,7 +141,7 @@ A dedicated server stack that is already deployed keeps its VPC and its instance
 
 The deployment waits until the server installation finishes. A new stack takes about 5 to 10 more minutes after the instance starts, and then the **pairing link** appears in the stack outputs and on the last screen of the script.
 
-```
+```text
 OrcaServerStack.PairingWebLink = https://<cloudfront-domain>/web-index.html#pairing=orca%3A%2F%2Fpair%3Fcode%3D...&gate-setup=...
 OrcaServerStack.GateSetupCode  = <one-time setup code>   ("none (access password already set)" once a password exists)
 OrcaServerStack.PairingCode    = orca://pair?code=...
@@ -230,7 +232,7 @@ The figure compares the two deployment modes: what each stack creates, how the s
 
 This mode installs Orca on a server that already runs behind CloudFront and an ALB, such as the `VscodeServerStack` of ec2_vscode. The EC2 instance and the ALB of the host stack are used as they are, and one more CloudFront distribution is added for Orca.
 
-```
+```text
                 ┌─ CloudFront (VS Code, existing) ── X-Custom-Secret = A ─┐
 User ──HTTPS──> │                                                          ├─> host ALB :80 ──┬─ header A → EC2 :8888 code-server
                 └─ CloudFront (Orca, new)       ── X-Custom-Secret = B ─┘  (SG: prefix list only) ├─ header B → EC2 :6768 orca-serve
@@ -512,7 +514,7 @@ The table lists the role of the dedicated server. An `--attach` stack uses the r
 
 ## Project Structure
 
-```
+```text
 .
 ├── deploy_orca.sh            # CDK deployment script (interactive or --yes)
 ├── deploy_orca_tf.sh         # Terraform deployment script (interactive or --yes, --plan shows the plan only)
@@ -625,7 +627,7 @@ This project does not include a LICENSE file. No license has been chosen.
 ## Contact
 
 - Maintainer: [WooHyung Choi (whchoi98)](https://github.com/whchoi98)
-- Issues: this project has no remote repository yet, so there is no issue tracker.
+- Issues: [github.com/whchoi98/my-orca/issues](https://github.com/whchoi98/my-orca/issues)
 
 ---
 
@@ -655,7 +657,7 @@ This project does not include a LICENSE file. No license has been chosen.
   <img src="docs/infographic/build/01-access-path_16x9_light.png" alt="접속 경로와 보호 계층: 브라우저, 암호 게이트 함수와 KeyValueStore가 있는 CloudFront, X-Custom-Secret 헤더를 확인하는 ALB, Private EC2의 orca-serve, 그리고 접속 두 단계와 비밀 값의 보관 위치">
 </picture>
 
-```
+```text
 User ──HTTPS/WSS──> CloudFront ──HTTP:80 + X-Custom-Secret──> ALB ──HTTP/WS:6768──> EC2 (Private Subnet)
                     [암호 게이트]   (SG: CloudFront prefix list만)        (SG: ALB SG만)    orca-ide serve
                     CloudFront Function + KeyValueStore
@@ -736,6 +738,8 @@ User ──HTTPS/WSS──> CloudFront ──HTTP:80 + X-Custom-Secret──> AL
 ### 1. 작업 환경 준비
 
 ```bash
+git clone https://github.com/whchoi98/my-orca.git
+cd my-orca
 bash scripts/setup.sh
 ```
 
@@ -760,7 +764,7 @@ ORCA_WEB_PASSWORD='...' bash deploy_orca.sh --yes   # 암호까지 프롬프트 
 
 배포는 서버 설치가 끝날 때까지 기다립니다. 새 스택은 인스턴스가 시작된 뒤 약 5분에서 10분이 더 걸리고 끝나면 스택 출력과 스크립트 마지막 화면에 **페어링 링크**가 나옵니다.
 
-```
+```text
 OrcaServerStack.PairingWebLink = https://<cloudfront-domain>/web-index.html#pairing=orca%3A%2F%2Fpair%3Fcode%3D...&gate-setup=...
 OrcaServerStack.GateSetupCode  = <1회용 설정 코드>   (암호를 이미 정했으면 "none (access password already set)")
 OrcaServerStack.PairingCode    = orca://pair?code=...
@@ -851,7 +855,7 @@ bash ~/ec2_vscode/kiro-cli-setup/01-setup-bedrock-env.sh
 
 ec2_vscode의 `VscodeServerStack`처럼 이미 CloudFront와 ALB 뒤에서 운영 중인 서버에 Orca를 함께 설치하는 방식입니다. EC2와 ALB는 호스트 스택의 것을 그대로 쓰고 Orca 전용 CloudFront 배포를 하나 더 둡니다.
 
-```
+```text
                 ┌─ CloudFront (VS Code, 기존) ── X-Custom-Secret = A ─┐
 User ──HTTPS──> │                                                      ├─> 호스트 ALB :80 ──┬─ 헤더 A → EC2 :8888 code-server
                 └─ CloudFront (Orca, 새로)  ── X-Custom-Secret = B ─┘   (SG: prefix list만) ├─ 헤더 B → EC2 :6768 orca-serve
@@ -1133,7 +1137,7 @@ CloudFront 배포가 포함되어 있어 삭제까지 10분에서 15분이 걸�
 
 ## 프로젝트 구조
 
-```
+```text
 .
 ├── deploy_orca.sh            # CDK 배포 스크립트 (대화형 또는 --yes)
 ├── deploy_orca_tf.sh         # Terraform 배포 스크립트 (대화형 또는 --yes, --plan은 계획만 확인)
@@ -1246,4 +1250,4 @@ bash infra-tf/run-tests.sh
 ## 연락처
 
 - 관리자: [WooHyung Choi (whchoi98)](https://github.com/whchoi98)
-- 이슈: 이 프로젝트에는 아직 원격 저장소가 없어 이슈 트래커가 없습니다.
+- 이슈: [github.com/whchoi98/my-orca/issues](https://github.com/whchoi98/my-orca/issues)

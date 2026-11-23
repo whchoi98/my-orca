@@ -32,6 +32,11 @@ HK_DENY=$(jq -r '.permissions.deny[]' .claude/settings.json)
 assert_contains "deny: rm -rf" "$HK_DENY" "Bash(rm -rf:*)"
 assert_contains "deny: 강제 push" "$HK_DENY" "Bash(git push --force:*)"
 assert_contains "deny: .env 읽기" "$HK_DENY" "Read(./.env)"
+# .env.local 같은 파일도 막는다. .env.example은 값이 없는 견본이라 읽을 수 있어야 한다
+assert_contains "deny: .env.* 읽기" "$HK_DENY" "Read(./.env.*)"
+assert_contains "deny: .env.example은 예외" "$HK_DENY" "Read(!.env.example)"
+assert_contains "deny: 강제 push의 짧은 옵션" "$HK_DENY" "Bash(git push -f *)"
+assert_contains "deny: rm -fr" "$HK_DENY" "Bash(rm -fr *)"
 # cdk-outputs.json에는 페어링 링크가 평문으로 들어 있다
 assert_contains "deny: cdk-outputs.json 읽기" "$HK_DENY" "Read(./cdk-outputs.json)"
 # Terraform 상태 파일에는 X-Custom-Secret 값이 평문으로 들어 있다
