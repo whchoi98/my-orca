@@ -135,5 +135,5 @@ sed "s/^    'AKIA\[0-9A-Z\]{16}'/    '(?<=a+)AKIA'/" "$SP_SCANNER" > "$SP_BROKEN
 grep -qF "(?<=a+)AKIA" "$SP_BROKEN" && pass "깨뜨린 사본을 만듦" || fail "깨뜨린 사본을 만듦" "치환되지 않음"
 echo "nothing here" > "$TEST_TMP/plain.txt"
 SP_OUT=$(bash "$SP_BROKEN" --files "$TEST_TMP/plain.txt" 2>&1; echo "exit=$?")
-assert_contains "검사기: 패턴 오류는 통과시키지 않고 exit 1" "$SP_OUT" "exit=1"
+assert_contains "검사기: 패턴 오류는 통과시키지 않고 exit 2" "$SP_OUT" "exit=2"
 assert_contains "검사기: 패턴 오류를 알림" "$SP_OUT" "검사 패턴에 오류"

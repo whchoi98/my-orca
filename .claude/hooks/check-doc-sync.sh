@@ -1,22 +1,64 @@
 #!/bin/bash
 # 파일을 수정한 뒤 함께 맞춰야 할 문서와 확인할 일을 알려 준다.
-# PostToolUse(Write|Edit)가 부른다. Claude Code는 이벤트를 stdin의 JSON으로 넘긴다.
-# 손으로 돌리거나 시험할 때는 경로를 인자로 준다.
-# 모듈 문서(CLAUDE.md)는 수정한 파일의 디렉터리에서 모듈 루트까지 올라가며 찾는다.
+# PostToolUse(Write|Edit)가 부른다. Claude Code는 이벤트를 stdin의 JSON(tool_input.file_path, session_id)으로
+# 넘긴다. 손으로 돌리거나 시험할 때는 경로를 인자로 준다.
+#
+# project-init:module-coverage
+# 모듈 문서의 규칙: 수정한 파일의 디렉터리나 그 위의 디렉터리(모듈 루트까지)에 CLAUDE.md가 있으면 그 모듈은
+# 문서가 있는 것으로 본다. 없을 때는 하위 디렉터리마다 문서를 요구하지 않고 모듈 루트의 CLAUDE.md 하나를
+# 알린다. 이 프로젝트는 SOURCE_ROOTS의 디렉터리 하나하나가 모듈이다.
+# 문서가 없다는 알림(모듈 문서, ADR)은 세션마다 한 번만 한다. 인자로 부르면 세션이 없어 매번 알린다.
+# 연결된 작업 트리(git worktree, .claude/worktrees/)에서 수정한 파일은 그 작업 트리를 기준으로 본다.
+# CLAUDE_PROJECT_DIR은 세션을 시작한 체크아웃에 머물기 때문이다. 다른 저장소의 파일은 따라가지 않는다.
 
+SESSION_ID=""
 if [ "$#" -ge 1 ]; then
     FILE_PATH="$1"
     FROM_HOOK=false
 else
-    FILE_PATH=$(jq -r '.tool_input.file_path // empty' 2>/dev/null)
+    [ -t 0 ] && exit 0
+    RAW=$(cat)
+    FILE_PATH=$(jq -r '.tool_input.file_path // empty' <<<"$RAW" 2>/dev/null)
+    SESSION_ID=$(jq -r '.session_id // empty' <<<"$RAW" 2>/dev/null)
     FROM_HOOK=true
 fi
 [ -z "$FILE_PATH" ] && exit 0
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+
+# common_dir <디렉터리>: 저장소가 함께 쓰는 git 디렉터리. 연결된 작업 트리와 원래 체크아웃에서 같은 값이다
+common_dir() {
+    (
+        cd "$1" 2>/dev/null || exit 0
+        top=$(git rev-parse --show-toplevel 2>/dev/null) && cd "$top" || exit 0
+        dir=$(git rev-parse --git-common-dir 2>/dev/null) && cd "$dir" && pwd -P
+    ) 2>/dev/null
+}
+
+# once <키>: 이 세션에서 이 키를 처음 알릴 때만 참이다. 세션 ID가 없으면(인자로 부른 경우) 늘 참이다
+once() {
+    [ -z "$SESSION_ID" ] && return 0
+    local seen="${TMPDIR:-/tmp}/claude-doc-sync-${SESSION_ID//[^A-Za-z0-9_-]/}"
+    grep -qxF -- "$1" "$seen" 2>/dev/null && return 1
+    printf '%s\n' "$1" >> "$seen" 2>/dev/null
+    return 0
+}
+
+# 절대 경로는 그 파일이 든 작업 트리를 기준으로 푼다. 그 작업 트리가 이 저장소의 것일 때만 그렇게 한다.
+# 경로는 git이 알려 주므로 체크아웃 경로가 심볼릭 링크여도 상관없다.
+FILE_DIR=$(dirname "$FILE_PATH")
+if [[ "$FILE_PATH" == /* ]] && TOP=$(git -C "$FILE_DIR" rev-parse --show-toplevel 2>/dev/null) &&
+    COMMON=$(common_dir "$TOP") && [ -n "$COMMON" ] && [ "$COMMON" = "$(common_dir "$PROJECT_DIR")" ]; then
+    PREFIX=$(git -C "$PROJECT_DIR" rev-parse --show-prefix 2>/dev/null)   # 프로젝트가 저장소의 하위 디렉터리일 때
+    FILE_PATH="$(git -C "$FILE_DIR" rev-parse --show-prefix 2>/dev/null)${FILE_PATH##*/}"
+    [[ "$FILE_PATH" == "$PREFIX"* ]] || exit 0   # 이 프로젝트 밖의 파일
+    FILE_PATH="${FILE_PATH#"$PREFIX"}"
+    PROJECT_DIR="$TOP${PREFIX:+/${PREFIX%/}}"
+else
+    FILE_PATH="${FILE_PATH#"$PROJECT_DIR"/}"
+    FILE_PATH="${FILE_PATH#./}"
+fi
 cd "$PROJECT_DIR" 2>/dev/null || exit 0
-FILE_PATH="${FILE_PATH#"$PROJECT_DIR"/}"
-FILE_PATH="${FILE_PATH#./}"
 
 # 이 프로젝트의 소스 디렉터리. 각각이 모듈이고 CLAUDE.md를 하나씩 가진다.
 # 루트의 운영 스크립트(deploy_orca.sh 등)는 루트 CLAUDE.md가 다룬다. docs, tools, orca(upstream clone)는 소스가 아니다.
@@ -37,7 +79,7 @@ for ROOT in $SOURCE_ROOTS; do
             [ "$CHECK_DIR" = "$ROOT" ] && break
             CHECK_DIR=$(dirname "$CHECK_DIR")
         done
-        if ! $FOUND_CLAUDE; then
+        if ! $FOUND_CLAUDE && once "$ROOT/CLAUDE.md"; then
             MESSAGES+=("[doc-sync] $ROOT/CLAUDE.md가 없습니다. 모듈 문서를 만듭니다.")
         fi
         break
@@ -88,7 +130,7 @@ esac
 # 아키텍처를 수정했는데 ADR이 하나도 없으면 알린다.
 if [[ "$FILE_PATH" == docs/architecture.md ]]; then
     ADR_COUNT=$(find docs/decisions -name 'ADR-*.md' 2>/dev/null | wc -l)
-    if [ "$ADR_COUNT" -eq 0 ]; then
+    if [ "$ADR_COUNT" -eq 0 ] && once "ADR"; then
         MESSAGES+=("[doc-sync] ADR이 없습니다. 대안을 비교해 내린 결정이면 /add-adr로 docs/decisions/에 남깁니다.")
     fi
 fi

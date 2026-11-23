@@ -22,7 +22,7 @@ The only way in from outside is CloudFront, then an ALB whose security group adm
 | Pairing outputs | `infra-cdk/lib/pairing/handler.py` | Returns the link as resource attributes for the stack outputs; its own log lines carry the state only |
 | Pre-deployment checks | `deploy_orca.sh` | Stops an attach deployment when the host ALB security group is open to the internet; writes `cdk-outputs.json` with mode 600 |
 | Host install | `infra-cdk/lib/host/install_orca.sh` | Checks the RPM against the sha256 digest of the release, refuses ports held by other programs, prints nothing secret |
-| Commit check | `.claude/hooks/secret-scan.sh` | Blocks a commit that contains secret-like strings, environment identifiers or files that must not be committed |
+| Commit check | `.claude/hooks/secret-scan.sh` | Blocks a commit that contains secret-like strings, environment identifiers or files that must not be committed. It reads what the commit will contain: staged files from the index, and the working-tree files that `commit -a`, a path given to `commit`, or `git add` on the same command line would add (ignored files named by `git add -f` included) |
 | Session settings | `.claude/settings.json` | Deny and ask lists for Claude Code sessions in this repository |
 | Terraform front door | `infra-tf/modules/front-door/main.tf` | Generates the header value with `random_password` (it stays in the state file) and stores it in Secrets Manager; keeps the setup bundle in a bucket with public access blocked and TLS only |
 | Terraform deployment script | `deploy_orca_tf.sh` | Checks every security group of the host ALB, stops when the host already has an Orca deployment, and creates the state, plan and input files with umask 077 |
@@ -50,7 +50,7 @@ No ADR has been written yet. The design decisions are listed in `docs/architectu
 - `deploy_orca.sh`: the `OPEN_RULES` check and the `umask 077` block around `cdk deploy`
 - `deploy_orca_tf.sh`: the `OPEN_RULES` check over every ALB security group, the `ORCA_TARGETS` check and `umask 077`
 - `infra-tf/modules/front-door/main.tf`: `random_password.origin`, `aws_s3_bucket_public_access_block.gate`, the policy document `gate_host`
-- `.claude/hooks/secret-scan.sh`: `FORBIDDEN_PATHS`
+- `.claude/hooks/secret-scan.sh`: `FORBIDDEN_PATHS`, `scan_index`, `work_list`
 - `infra-cdk/test/password-gate.test.mjs`: tests of the gate function
 - `infra-cdk/test/setup_service_test.py`: tests of the setup service
 
@@ -79,7 +79,7 @@ No ADR has been written yet. The design decisions are listed in `docs/architectu
 | Pairing outputs | `infra-cdk/lib/pairing/handler.py` | 링크를 스택 출력용 리소스 속성으로 돌려줌. 자기 로그에는 상태만 남김 |
 | Pre-deployment checks | `deploy_orca.sh` | 호스트 ALB 보안 그룹이 인터넷 전체에 열려 있으면 추가 배포를 멈춤. `cdk-outputs.json`을 권한 600으로 씀 |
 | Host install | `infra-cdk/lib/host/install_orca.sh` | RPM을 릴리스의 sha256 값과 대조하고 다른 프로그램이 쓰는 포트를 가져가지 않으며 비밀 값을 출력하지 않음 |
-| Commit check | `.claude/hooks/secret-scan.sh` | 비밀 값으로 보이는 문자열, 환경 식별 값, 커밋하면 안 되는 파일이 든 커밋을 막음 |
+| Commit check | `.claude/hooks/secret-scan.sh` | 비밀 값으로 보이는 문자열, 환경 식별 값, 커밋하면 안 되는 파일이 든 커밋을 막음. 그 커밋에 들어갈 내용을 봄: 스테이징한 파일은 인덱스의 사본을, `commit -a`와 경로를 준 `commit`, 같은 줄의 `git add`가 넣을 파일은 작업 트리의 파일을 봄(`git add -f`로 이름을 준 무시된 파일 포함) |
 | Session settings | `.claude/settings.json` | 이 저장소의 Claude Code 세션에 적용되는 거부 목록과 확인 목록 |
 | Terraform front door | `infra-tf/modules/front-door/main.tf` | 헤더 값을 `random_password`로 만들어(상태 파일에 남음) Secrets Manager에도 저장. 설정 묶음은 공개를 차단하고 TLS만 허용하는 버킷에 둠 |
 | Terraform deployment script | `deploy_orca_tf.sh` | 호스트 ALB의 보안 그룹을 모두 확인하고 호스트에 Orca 배포가 이미 있으면 멈추며 상태, 계획, 입력 값 파일을 umask 077로 만듦 |
@@ -107,7 +107,7 @@ ADR은 아직 없습니다. 설계 결정은 `docs/architecture.md`에 적혀 �
 - `deploy_orca.sh`: `OPEN_RULES` 점검과 `cdk deploy`를 감싼 `umask 077` 블록
 - `deploy_orca_tf.sh`: ALB의 모든 보안 그룹을 보는 `OPEN_RULES` 점검, `ORCA_TARGETS` 점검, `umask 077`
 - `infra-tf/modules/front-door/main.tf`: `random_password.origin`, `aws_s3_bucket_public_access_block.gate`, 정책 문서 `gate_host`
-- `.claude/hooks/secret-scan.sh`: `FORBIDDEN_PATHS`
+- `.claude/hooks/secret-scan.sh`: `FORBIDDEN_PATHS`, `scan_index`, `work_list`
 - `infra-cdk/test/password-gate.test.mjs`: 게이트 함수의 시험
 - `infra-cdk/test/setup_service_test.py`: 설정 서비스의 시험
 
