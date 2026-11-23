@@ -25,7 +25,8 @@ Orca 서버의 AWS 리소스와 서버 설치를 정의하는 CDK(TypeScript) �
 | `test/pairing_test.py` | 페어링 핸들러와 조회 스크립트 시험 |
 | `test/host_install_test.py` | 설치 커스텀 리소스와 설치 스크립트의 안전장치 시험 |
 | `test/upgrade_test.py` | 루트의 `upgrade_orca.sh` 시험(가짜 aws, curl, deploy) |
-| `package.json` | 의존성과 `npm test`. 시험 파일 다섯 개를 차례로 실행 |
+| `test/deploy_test.py` | 루트의 `deploy_orca.sh`와 대화형 안내(`deploy_guide.sh`) 시험(가짜 aws, curl, npm, npx). 메뉴, 기존 VPC의 서브넷 분류, 기존 스택의 설정 이어받기 |
+| `package.json` | 의존성과 `npm test`. 시험 파일 여섯 개를 차례로 실행 |
 | `cdk.json` | CDK 앱 실행 명령과 기능 플래그 |
 
 `cdk.context.json`은 AMI ID를 고정하는 로컬 파일입니다. 계정 ID와 VPC ID가 들어 있어 추적하지 않습니다. 지우면 다음 배포에서 최신 AMI를 다시 조회합니다.

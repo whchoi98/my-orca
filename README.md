@@ -123,10 +123,19 @@ The script checks the local tools and prepares the working files. It does not cr
 ### 2. Deploy
 
 ```bash
-bash deploy_orca.sh                 # Interactive: region, instance type, VPC, access password (press Enter to skip the password)
+bash deploy_orca.sh                 # Interactive: numbered menus for the region, the VPC (new or existing) and the instance type
 bash deploy_orca.sh --yes           # Defaults: ap-northeast-2, r6g.xlarge, new VPC, password set at first login
 ORCA_WEB_PASSWORD='...' bash deploy_orca.sh --yes   # Set the password too, without prompts
 ```
+
+Without `--yes` the script asks with numbered menus, and a value given as an option is not asked again (`deploy_guide.sh`, shared with `deploy_orca_tf.sh`).
+
+- **Region**: pick one of twelve regions or type a region code.
+- **VPC**: create a new one (you can name it) or pick one from the list of VPCs in the account. For an existing VPC the script shows its subnets sorted the way CDK sorts them when it reads a VPC (public, private, isolated) and accepts the VPC only when it has public subnets in two or more Availability Zones for the ALB and a private subnet with a default route to a NAT gateway or a Transit Gateway for the server. When the VPC already has SSM endpoints, new ones are not created. A VPC given with `--vpc-id` is checked the same way before the deployment starts.
+- **Instance type**: pick one of the fifteen types the stack accepts, shown with architecture, vCPU and memory. A type the region does not offer is marked and refused.
+- **Access password**: type it now or press Enter to set it at the first login.
+
+A dedicated server stack that is already deployed keeps its VPC and its instance type on a later run, and the script stops when another VPC is given, because a different VPC would replace the ALB and the server.
 
 The deployment waits until the server installation finishes. A new stack takes about 5 to 10 more minutes after the instance starts, and then the **pairing link** appears in the stack outputs and on the last screen of the script.
 
@@ -261,7 +270,7 @@ The code-server password is also in the EC2 user data (readable inside the insta
 ```bash
 bash deploy_orca_tf.sh --attach VscodeServerStack --yes     # Add Orca to an existing server (infra-tf/attach)
 bash deploy_orca_tf.sh --attach-instance <InstanceId> --attach-listener <listener-arn> --yes   # A server that CloudFormation did not create
-bash deploy_orca_tf.sh                                      # Interactive: dedicated server (infra-tf/dedicated)
+bash deploy_orca_tf.sh                                      # Interactive: the same menus (region, VPC, instance type) for a dedicated server
 bash deploy_orca_tf.sh --plan                               # Show the plan only: nothing is created and no input is saved
 ORCA_WEB_PASSWORD='...' bash deploy_orca_tf.sh --yes        # Set the password too, without prompts
 ```
@@ -299,13 +308,13 @@ terraform -chdir=infra-tf/attach apply
 | `X-Custom-Secret` value | CloudFormation dynamic reference, not in the template | In the state file in plain text |
 | Setup service bundle | CDK asset bucket | A bucket of its own (public access blocked, TLS only, content hash in the object key) |
 | Resource names | Built from the stack name | Built from the `name` variable (2 to 24 lowercase letters, digits or hyphens): `<name>-alb`, `<name>-tg`, `<name>-gate-tg`, `<name>-orca-role-<region>` |
-| Instance type of the dedicated server | Allowed list in the template | Any type. The AMI architecture is read from the type |
-| Existing VPC for the dedicated server | `--vpc-id`, and the subnets are looked up | `--vpc-id` together with `--alb-subnets` and `--instance-subnet` |
-| AMI and UserData of an existing dedicated instance | The AMI is pinned in `cdk.context.json`, and a changed `OrcaVersion` restarts the instance | Changes are not applied (`ignore_changes`), which protects the volume. Rebuild with `terraform apply -replace=aws_instance.orca` |
-| Options on a later run | `--no-password-gate` and `--no-pairing-output` must be given again | Saved inputs are kept |
+| Instance type of the dedicated server | Allowed list in the template. The menu shows that list | Any type (the menu has a custom entry). The AMI architecture is read from the type |
+| Existing VPC for the dedicated server | `--vpc-id` or the menu. CDK picks the subnets | `--vpc-id` or the menu. The script picks one public subnet per Availability Zone and a private subnet (asked in the menu), or takes them from `--alb-subnets` and `--instance-subnet` |
+| AMI, UserData and tags of an existing dedicated instance | The AMI is pinned in `cdk.context.json`, and a changed `OrcaVersion` restarts the instance | Changes are not applied (`ignore_changes`). This protects the volume and leaves tags that account automation adds to the instance alone. Rebuild with `terraform apply -replace=aws_instance.orca` |
+| Options on a later run | The VPC and the instance type of a dedicated stack are kept. `--no-password-gate` and `--no-pairing-output` must be given again | Saved inputs are kept |
 | Upgrade | `upgrade_orca.sh` | `deploy_orca_tf.sh --attach <host stack> --orca-version <version>` |
 
-Checked on 2026-11-22 with Terraform 1.14.7 (AWS provider 6.73.0, random 3.9.1 and archive 2.8.1, pinned in `.terraform.lock.hcl` with the hashes of four platforms): `terraform validate` on both configurations, `bash infra-tf/run-tests.sh`, a read-only `terraform plan` against the real account (55 resources for the dedicated server, 21 for the existing server), `infra-tf/scripts/ssm_run.sh` with a harmless script over real SSM,, that the UserData of the dedicated server is byte for byte what the CDK stack produces, and when the install and uninstall resources run. The last one was checked with a local configuration of the same shape and no AWS resources: a version change runs only the install again, a failed install runs again on the next apply, and the uninstall runs only on destroy or when the instance changes. Not checked: `terraform apply` and `terraform destroy`, because no Terraform deployment was made, and any Terraform version other than 1.14.7 (`required_version` is `>= 1.5.0`).
+Checked on 2026-11-22 and 2026-11-23 with Terraform 1.14.7 (AWS provider 6.73.0, random 3.9.1 and archive 2.8.1, pinned in `.terraform.lock.hcl` with the hashes of four platforms): `terraform validate` on both configurations, `bash infra-tf/run-tests.sh`, and that the UserData of the dedicated server is byte for byte what the CDK stack produces. The dedicated server was deployed for real twice with `deploy_orca_tf.sh` and removed again with `cleanup.sh --tf dedicated`: once into a new VPC (55 resources) and once into an existing VPC (33 resources, with the subnets found by the script and the SSM endpoints of that VPC left alone). Each time the server finished its setup, both target groups became healthy, a login through CloudFront reached `orca-serve` (web client, assets and the WebSocket upgrade), direct access to the ALB did not connect, and nothing was left after the destroy. On the second deployment a new plan showed no changes. Not checked with a real deployment: the configuration for an existing server (`infra-tf/attach`). For it the read-only `terraform plan` against the real account (21 resources), `infra-tf/scripts/ssm_run.sh` with a harmless script over real SSM, and the timing of the install and uninstall resources with a local configuration of the same shape were checked: a version change runs only the install again, a failed install runs again on the next apply, and the uninstall runs only on destroy or when the instance changes. Terraform versions other than 1.14.7 were not tried (`required_version` is `>= 1.5.0`).
 
 ### Operations
 
@@ -410,7 +419,7 @@ aws cloudformation delete-stack --stack-name OrcaServerStack --region ap-northea
 bash cleanup.sh --tf attach              # or --tf dedicated
 ```
 
-The stack contains a CloudFront distribution, so deletion can take 10 to 15 minutes. `OrcaServerStack` also deletes the EBS volume (repositories in progress, `~/.config/orca`). `OrcaOnVscodeStack` (`--attach`) removes only Orca from the host server and leaves the server and its data. When no stack name is given and `OrcaServerStack` does not exist, `cleanup.sh`, `get_pairing_url.sh` and `set_password.sh` use `OrcaOnVscodeStack`. `cleanup.sh --tf` runs `terraform destroy` and then removes the saved input file, so that a later deployment does not inherit the old values.
+The stack contains a CloudFront distribution, so deletion can take 10 to 15 minutes. `OrcaServerStack` also deletes the EBS volume (repositories in progress, `~/.config/orca`). `OrcaOnVscodeStack` (`--attach`) removes only Orca from the host server and leaves the server and its data. When no stack name is given and `OrcaServerStack` does not exist, `cleanup.sh`, `get_pairing_url.sh` and `set_password.sh` use `OrcaOnVscodeStack`. `cleanup.sh --tf` runs `terraform destroy` and then removes the saved input file, so that a later deployment does not inherit the old values. One thing stays behind when a dedicated server stack that made its own VPC is deleted: the CloudWatch log group of the Lambda function CDK uses to restrict the default security group of the VPC (`/aws/lambda/<stack name>-CustomVpcRestrictDefaultSG...`). It is not part of the stack, so delete it by hand if you do not want it. A Terraform deployment leaves nothing behind (both checked with real deployments on 2026-11-23).
 
 ## Configuration
 
@@ -458,11 +467,11 @@ The table lists the options of `deploy_orca_tf.sh` and the Terraform variables t
 | `--name <name>` | `name` | Deployment name and prefix of every resource name (2 to 24 lowercase letters, digits or hyphens) | `orca-server`, or `orca-on-vscode` on an existing server |
 | `--instance-type <type>` | `instance_type` | EC2 instance type of the dedicated server | r6g.xlarge |
 | `--orca-version <x.y.z>` | `orca_version` | Orca release to install | saved value, else the latest GitHub release (variable default 1.4.269) |
-| `--vpc-id <vpc-id>` | `vpc_id` | Existing VPC for the dedicated server, together with `--alb-subnets` and `--instance-subnet` | new VPC 10.253.0.0/16 |
-| `--alb-subnets <a,b>` | `alb_subnet_ids` | Two or more public subnets of the existing VPC in different Availability Zones | |
-| `--instance-subnet <id>` | `instance_subnet_id` | Private subnet of the existing VPC with a route out to the internet | |
+| `--vpc-id <vpc-id>` | `vpc_id` | Existing VPC for the dedicated server. Its subnets are checked before the deployment | new VPC 10.253.0.0/16 |
+| `--alb-subnets <a,b>` | `alb_subnet_ids` | Two or more public subnets of the existing VPC in different Availability Zones | one public subnet per Availability Zone, found in the VPC |
+| `--instance-subnet <id>` | `instance_subnet_id` | Private subnet of the existing VPC with a route out to the internet | the first private subnet found in the VPC |
 | `--vpc-name <name>` | `vpc_name` | Name tag of the new VPC | orca-vpc |
-| `--skip-vpc-endpoints` | `create_ssm_endpoints` (false) | Skip the SSM VPC endpoints when the VPC already has them | endpoints are created |
+| `--skip-vpc-endpoints` | `create_ssm_endpoints` (false) | Skip the SSM VPC endpoints. An existing VPC that already has them is detected, so the option is rarely needed | endpoints are created |
 | `--no-password-gate`, `--password-gate` | `password_gate` | Leave out the CloudFront password gate, or create it again | gate on |
 | `--plan` | | Show the plan and stop | |
 | `--yes` | | Proceed without confirmation | |
@@ -507,6 +516,7 @@ The table lists the role of the dedicated server. An `--attach` stack uses the r
 .
 ├── deploy_orca.sh            # CDK deployment script (interactive or --yes)
 ├── deploy_orca_tf.sh         # Terraform deployment script (interactive or --yes, --plan shows the plan only)
+├── deploy_guide.sh           # Menus both deployment scripts share (region, VPC, instance type); not run directly
 ├── upgrade_orca.sh           # Upgrade Orca to a new version (--attach stacks; redeploys with deploy_orca.sh)
 ├── get_pairing_url.sh        # Read the pairing link (SSM Session Manager)
 ├── set_password.sh           # Set or change the access password (KeyValueStore)
@@ -534,7 +544,8 @@ The table lists the role of the dedicated server. An `--attach` stack uses the r
 │   ├── test/setup_service_test.py      # Setup service tests
 │   ├── test/pairing_test.py            # Pairing output tests
 │   ├── test/host_install_test.py       # Tests of the install custom resource and the install script guards
-│   ├── test/upgrade_test.py            # upgrade_orca.sh tests (fake aws, curl and deploy; npm test runs all five)
+│   ├── test/upgrade_test.py            # upgrade_orca.sh tests (fake aws, curl and deploy)
+│   ├── test/deploy_test.py             # deploy_orca.sh and deploy_guide.sh tests (fake aws, curl, npm, npx; npm test runs all six)
 │   ├── cdk.context.json      #   Pinned AMI IDs (not tracked by git because it holds the account ID; deleting it replaces the instance with the latest AMI on the next deployment)
 │   ├── package.json
 │   ├── tsconfig.json
@@ -579,6 +590,7 @@ The tests use fake AWS clients and commands and do not call AWS. The Terraform t
 | Pairing output | `infra-cdk/test/pairing_test.py` | The custom resource handler and the script that reads the link on the server |
 | Host install | `infra-cdk/test/host_install_test.py` | The install custom resource and the guards of the install script |
 | Upgrade script | `infra-cdk/test/upgrade_test.py` | Version comparison, refusals and the hand-off to `deploy_orca.sh` |
+| Deployment script and menus | `infra-cdk/test/deploy_test.py` | The menus, the subnet check of an existing VPC, settings kept from a deployed stack |
 | Terraform configuration | `infra-tf/dedicated/tests/`, `infra-tf/attach/tests/` | Security group rules, listener rules and their priorities, the gate switch, UserData, input validation, and that a version change does not reach the uninstall |
 | SSM install helper | `infra-tf/test/ssm_run_test.py` | The command sent through SSM, shell quoting of the inputs, a failed install, and that an uninstall never blocks a destroy |
 
@@ -732,10 +744,19 @@ bash scripts/setup.sh
 ### 2. 배포
 
 ```bash
-bash deploy_orca.sh                 # 대화형: 리전, 인스턴스 타입, VPC, 접속 암호 (암호는 Enter로 건너뛰기 가능)
+bash deploy_orca.sh                 # 대화형: 번호 메뉴로 리전, VPC(새로 만들기 또는 기존 VPC), 인스턴스 타입을 고름
 bash deploy_orca.sh --yes           # 기본값: ap-northeast-2, r6g.xlarge, 새 VPC, 암호는 최초 로그인 때 설정
 ORCA_WEB_PASSWORD='...' bash deploy_orca.sh --yes   # 암호까지 프롬프트 없이 지정
 ```
+
+`--yes` 없이 실행하면 번호 메뉴로 묻습니다. 옵션으로 준 값은 다시 묻지 않습니다(`deploy_guide.sh`, `deploy_orca_tf.sh`와 함께 씀).
+
+- **리전**: 열두 리전 가운데 하나를 고르거나 리전 코드를 입력합니다.
+- **VPC**: 새로 만들거나(이름을 정할 수 있음) 계정의 VPC 목록에서 고릅니다. 기존 VPC는 서브넷을 CDK가 VPC를 읽을 때와 같은 기준(퍼블릭, 프라이빗, 격리)으로 나눠 보여 줍니다. ALB가 쓸 퍼블릭 서브넷이 가용 영역 둘 이상에 있고 서버가 쓸 프라이빗 서브넷(NAT Gateway나 Transit Gateway로 나가는 기본 경로가 있는 것)이 있어야 받습니다. 그 VPC에 SSM 엔드포인트가 이미 있으면 새로 만들지 않습니다. `--vpc-id`로 준 VPC도 배포를 시작하기 전에 같은 방법으로 확인합니다.
+- **인스턴스 타입**: 스택이 받는 열다섯 타입 가운데 하나를 고릅니다. 아키텍처, vCPU, 메모리를 함께 보여 줍니다. 리전에서 제공하지 않는 타입은 표시하고 받지 않습니다.
+- **접속 암호**: 지금 입력하거나 Enter를 눌러 최초 로그인 때 정합니다.
+
+이미 배포한 전용 서버 스택은 다시 실행해도 VPC와 인스턴스 타입을 유지합니다. 다른 VPC를 주면 스크립트가 멈춥니다. VPC가 바뀌면 ALB와 서버를 새로 만들게 되기 때문입니다.
 
 배포는 서버 설치가 끝날 때까지 기다립니다. 새 스택은 인스턴스가 시작된 뒤 약 5분에서 10분이 더 걸리고 끝나면 스택 출력과 스크립트 마지막 화면에 **페어링 링크**가 나옵니다.
 
@@ -870,7 +891,7 @@ code-server 암호는 EC2 사용자 데이터(인스턴스 안에서 IMDS로 읽
 ```bash
 bash deploy_orca_tf.sh --attach VscodeServerStack --yes     # 기존 서버에 Orca 추가 (infra-tf/attach)
 bash deploy_orca_tf.sh --attach-instance <InstanceId> --attach-listener <listener-arn> --yes   # CloudFormation으로 만들지 않은 서버
-bash deploy_orca_tf.sh                                      # 대화형: 전용 서버 (infra-tf/dedicated)
+bash deploy_orca_tf.sh                                      # 대화형: 전용 서버를 같은 메뉴(리전, VPC, 인스턴스 타입)로 배포
 bash deploy_orca_tf.sh --plan                               # 계획만 확인: 아무것도 만들지 않고 입력 값도 저장하지 않음
 ORCA_WEB_PASSWORD='...' bash deploy_orca_tf.sh --yes        # 암호까지 프롬프트 없이 지정
 ```
@@ -908,13 +929,13 @@ terraform -chdir=infra-tf/attach apply
 | `X-Custom-Secret` 값 | CloudFormation 동적 참조라 템플릿에 없음 | 상태 파일에 평문으로 들어감 |
 | 설정 서비스 묶음 | CDK 자산 버킷 | 전용 버킷(공개 차단, TLS만 허용, 객체 키에 내용 해시) |
 | 리소스 이름 | 스택 이름으로 만듦 | `name` 변수(소문자, 숫자, 하이픈 2자에서 24자)로 만듦: `<name>-alb`, `<name>-tg`, `<name>-gate-tg`, `<name>-orca-role-<region>` |
-| 전용 서버의 인스턴스 타입 | 템플릿의 허용 목록 | 제한 없음. AMI 아키텍처를 타입에서 읽음 |
-| 전용 서버의 기존 VPC | `--vpc-id`를 주면 서브넷을 조회 | `--vpc-id`와 함께 `--alb-subnets`, `--instance-subnet`을 직접 지정 |
-| 이미 만든 전용 서버의 AMI와 UserData | AMI는 `cdk.context.json`에 고정하고 `OrcaVersion`을 바꾸면 인스턴스가 재시작됨 | 변경을 반영하지 않음(`ignore_changes`). 볼륨을 지키기 위한 것이고 다시 만들려면 `terraform apply -replace=aws_instance.orca` |
-| 다시 실행할 때의 옵션 | `--no-password-gate`와 `--no-pairing-output`을 다시 줘야 함 | 저장된 입력 값을 유지 |
+| 전용 서버의 인스턴스 타입 | 템플릿의 허용 목록. 메뉴가 그 목록을 보여 줌 | 제한 없음(메뉴에 직접 입력 항목이 있음). AMI 아키텍처를 타입에서 읽음 |
+| 전용 서버의 기존 VPC | `--vpc-id` 또는 메뉴. 서브넷은 CDK가 고름 | `--vpc-id` 또는 메뉴. 스크립트가 가용 영역마다 퍼블릭 서브넷 하나와 프라이빗 서브넷 하나(메뉴에서 물음)를 고르고, `--alb-subnets`와 `--instance-subnet`으로 직접 줄 수도 있음 |
+| 이미 만든 전용 서버의 AMI, UserData, 태그 | AMI는 `cdk.context.json`에 고정하고 `OrcaVersion`을 바꾸면 인스턴스가 재시작됨 | 변경을 반영하지 않음(`ignore_changes`). 볼륨을 지키고 계정의 자동화가 인스턴스에 붙인 태그를 그대로 두기 위한 것. 다시 만들려면 `terraform apply -replace=aws_instance.orca` |
+| 다시 실행할 때의 옵션 | 전용 서버 스택의 VPC와 인스턴스 타입은 유지. `--no-password-gate`와 `--no-pairing-output`은 다시 줘야 함 | 저장된 입력 값을 유지 |
 | 업그레이드 | `upgrade_orca.sh` | `deploy_orca_tf.sh --attach <호스트 스택> --orca-version <버전>` |
 
-2026-11-22에 Terraform 1.14.7(AWS provider 6.73.0, random 3.9.1, archive 2.8.1. `.terraform.lock.hcl`에 네 플랫폼의 해시와 함께 고정)로 확인한 것은 다음과 같습니다. 두 구성의 `terraform validate`, `bash infra-tf/run-tests.sh`, 실제 계정을 상대로 한 읽기 전용 `terraform plan`(전용 서버 55개, 기존 서버 추가 21개 리소스), 실제 SSM으로 무해한 스크립트를 보낸 `infra-tf/scripts/ssm_run.sh`, 전용 서버의 UserData가 CDK 스택이 만드는 것과 바이트 단위로 같다는 것, 그리고 설치와 제거 리소스가 실행되는 시점입니다. 마지막 것은 AWS 리소스 없이 같은 모양의 로컬 구성으로 확인했습니다. 버전을 바꾸면 설치만 다시 실행되고, 실패한 설치는 다음 apply에서 다시 실행되며, 제거는 destroy와 인스턴스 변경 때만 실행됩니다. 확인하지 않은 것은 `terraform apply`와 `terraform destroy`(Terraform으로 배포한 적이 없음), 그리고 1.14.7이 아닌 Terraform 버전입니다(`required_version`은 `>= 1.5.0`).
+2026-11-22와 2026-11-23에 Terraform 1.14.7(AWS provider 6.73.0, random 3.9.1, archive 2.8.1. `.terraform.lock.hcl`에 네 플랫폼의 해시와 함께 고정)로 확인한 것은 다음과 같습니다. 두 구성의 `terraform validate`, `bash infra-tf/run-tests.sh`, 그리고 전용 서버의 UserData가 CDK 스택이 만드는 것과 바이트 단위로 같다는 것입니다. 전용 서버는 `deploy_orca_tf.sh`로 실제로 두 번 배포하고 `cleanup.sh --tf dedicated`로 지웠습니다. 한 번은 새 VPC에(리소스 55개), 한 번은 기존 VPC에(리소스 33개, 서브넷은 스크립트가 찾았고 그 VPC의 SSM 엔드포인트는 그대로 둠) 배포했습니다. 두 번 모두 서버 설치가 끝났고 대상 그룹 둘이 healthy가 됐으며 CloudFront로 로그인해 `orca-serve`까지 닿았습니다(웹 클라이언트, 자산, WebSocket 업그레이드). ALB 직접 접속은 연결되지 않았고 삭제 뒤에 남은 리소스가 없었습니다. 두 번째 배포에서는 계획을 다시 계산해 변경이 없음을 확인했습니다. 실제 배포로 확인하지 않은 것은 기존 서버에 추가하는 구성(`infra-tf/attach`)입니다. 이 구성은 실제 계정을 상대로 한 읽기 전용 `terraform plan`(리소스 21개), 실제 SSM으로 무해한 스크립트를 보낸 `infra-tf/scripts/ssm_run.sh`, 그리고 같은 모양의 로컬 구성으로 본 설치와 제거 리소스의 실행 시점까지 확인했습니다. 버전을 바꾸면 설치만 다시 실행되고, 실패한 설치는 다음 apply에서 다시 실행되며, 제거는 destroy와 인스턴스 변경 때만 실행됩니다. 1.14.7이 아닌 Terraform 버전은 시험하지 않았습니다(`required_version`은 `>= 1.5.0`).
 
 ### 운영
 
@@ -1019,7 +1040,7 @@ aws cloudformation delete-stack --stack-name OrcaServerStack --region ap-northea
 bash cleanup.sh --tf attach              # 또는 --tf dedicated
 ```
 
-CloudFront 배포가 포함되어 있어 삭제까지 10분에서 15분이 걸릴 수 있습니다. `OrcaServerStack`은 EBS(작업 중인 저장소, `~/.config/orca`)도 함께 삭제합니다. `OrcaOnVscodeStack`(`--attach`)은 호스트 서버에서 Orca만 제거하고 서버와 데이터는 남깁니다. 스택 이름을 주지 않았는데 `OrcaServerStack`이 없으면 `cleanup.sh`, `get_pairing_url.sh`, `set_password.sh`는 `OrcaOnVscodeStack`을 씁니다. `cleanup.sh --tf`는 `terraform destroy`를 실행한 뒤 저장해 둔 입력 값 파일을 지워 다음 배포가 이전 값을 이어받지 않게 합니다.
+CloudFront 배포가 포함되어 있어 삭제까지 10분에서 15분이 걸릴 수 있습니다. `OrcaServerStack`은 EBS(작업 중인 저장소, `~/.config/orca`)도 함께 삭제합니다. `OrcaOnVscodeStack`(`--attach`)은 호스트 서버에서 Orca만 제거하고 서버와 데이터는 남깁니다. 스택 이름을 주지 않았는데 `OrcaServerStack`이 없으면 `cleanup.sh`, `get_pairing_url.sh`, `set_password.sh`는 `OrcaOnVscodeStack`을 씁니다. `cleanup.sh --tf`는 `terraform destroy`를 실행한 뒤 저장해 둔 입력 값 파일을 지워 다음 배포가 이전 값을 이어받지 않게 합니다. 스택이 직접 VPC를 만든 전용 서버 스택을 지우면 하나가 남습니다. CDK가 VPC의 기본 보안 그룹을 제한할 때 쓰는 Lambda 함수의 CloudWatch 로그 그룹(`/aws/lambda/<스택 이름>-CustomVpcRestrictDefaultSG...`)입니다. 스택에 속하지 않으므로 필요 없으면 직접 지웁니다. Terraform 배포는 남기는 것이 없습니다(둘 다 2026-11-23에 실제 배포로 확인).
 
 ## 환경 설정
 
@@ -1067,11 +1088,11 @@ CloudFront 배포가 포함되어 있어 삭제까지 10분에서 15분이 걸�
 | `--name <name>` | `name` | 배포 이름. 모든 리소스 이름의 앞부분(소문자, 숫자, 하이픈 2자에서 24자) | `orca-server`, 기존 서버에 추가하면 `orca-on-vscode` |
 | `--instance-type <type>` | `instance_type` | 전용 서버의 EC2 인스턴스 타입 | r6g.xlarge |
 | `--orca-version <x.y.z>` | `orca_version` | 설치할 Orca 릴리스 | 저장된 값, 없으면 GitHub 최신 릴리스 (변수 기본값 1.4.269) |
-| `--vpc-id <vpc-id>` | `vpc_id` | 전용 서버가 쓸 기존 VPC. `--alb-subnets`, `--instance-subnet`과 함께 지정 | 새 VPC 10.253.0.0/16 |
-| `--alb-subnets <a,b>` | `alb_subnet_ids` | 기존 VPC의 퍼블릭 서브넷 둘 이상. 가용 영역이 달라야 함 | |
-| `--instance-subnet <id>` | `instance_subnet_id` | 기존 VPC의 프라이빗 서브넷. 인터넷으로 나가는 경로가 있어야 함 | |
+| `--vpc-id <vpc-id>` | `vpc_id` | 전용 서버가 쓸 기존 VPC. 배포 전에 서브넷을 확인함 | 새 VPC 10.253.0.0/16 |
+| `--alb-subnets <a,b>` | `alb_subnet_ids` | 기존 VPC의 퍼블릭 서브넷 둘 이상. 가용 영역이 달라야 함 | VPC에서 찾은 퍼블릭 서브넷을 가용 영역마다 하나씩 |
+| `--instance-subnet <id>` | `instance_subnet_id` | 기존 VPC의 프라이빗 서브넷. 인터넷으로 나가는 경로가 있어야 함 | VPC에서 찾은 첫 프라이빗 서브넷 |
 | `--vpc-name <name>` | `vpc_name` | 새 VPC의 Name 태그 | orca-vpc |
-| `--skip-vpc-endpoints` | `create_ssm_endpoints` (false) | VPC에 SSM VPC 엔드포인트가 이미 있을 때 생성을 생략 | 엔드포인트를 만듦 |
+| `--skip-vpc-endpoints` | `create_ssm_endpoints` (false) | SSM VPC 엔드포인트 생성을 생략. 기존 VPC에 이미 있으면 스크립트가 알아서 생략하므로 줄 일이 드묾 | 엔드포인트를 만듦 |
 | `--no-password-gate`, `--password-gate` | `password_gate` | CloudFront 접속 암호 게이트를 만들지 않거나 다시 만듦 | 게이트 켬 |
 | `--plan` | | 계획만 보여 주고 끝냄 | |
 | `--yes` | | 확인 없이 진행 | |
@@ -1116,6 +1137,7 @@ CloudFront 배포가 포함되어 있어 삭제까지 10분에서 15분이 걸�
 .
 ├── deploy_orca.sh            # CDK 배포 스크립트 (대화형 또는 --yes)
 ├── deploy_orca_tf.sh         # Terraform 배포 스크립트 (대화형 또는 --yes, --plan은 계획만 확인)
+├── deploy_guide.sh           # 두 배포 스크립트가 함께 쓰는 메뉴(리전, VPC, 인스턴스 타입). 직접 실행하지 않음
 ├── upgrade_orca.sh           # Orca를 새 버전으로 업그레이드 (--attach 스택, deploy_orca.sh로 다시 배포)
 ├── get_pairing_url.sh        # 페어링 링크 조회 (SSM Session Manager)
 ├── set_password.sh           # 접속 암호 설정과 변경 (KeyValueStore)
@@ -1143,7 +1165,8 @@ CloudFront 배포가 포함되어 있어 삭제까지 10분에서 15분이 걸�
 │   ├── test/setup_service_test.py      # 설정 서비스 테스트
 │   ├── test/pairing_test.py            # 페어링 출력 테스트
 │   ├── test/host_install_test.py       # 설치 커스텀 리소스와 설치 스크립트 안전장치 테스트
-│   ├── test/upgrade_test.py            # upgrade_orca.sh 테스트 (가짜 aws, curl, deploy. npm test가 다섯 개를 모두 실행)
+│   ├── test/upgrade_test.py            # upgrade_orca.sh 테스트 (가짜 aws, curl, deploy)
+│   ├── test/deploy_test.py             # deploy_orca.sh와 deploy_guide.sh 테스트 (가짜 aws, curl, npm, npx. npm test가 여섯 개를 모두 실행)
 │   ├── cdk.context.json      #   고정된 AMI ID (계정 ID가 들어 있어 git으로 추적하지 않음. 지우면 다음 배포 때 최신 AMI로 인스턴스 교체)
 │   ├── package.json
 │   ├── tsconfig.json
@@ -1188,6 +1211,7 @@ bash infra-tf/run-tests.sh
 | 페어링 출력 | `infra-cdk/test/pairing_test.py` | 커스텀 리소스 핸들러와 서버에서 링크를 읽는 스크립트 |
 | 호스트 설치 | `infra-cdk/test/host_install_test.py` | 설치 커스텀 리소스와 설치 스크립트의 안전장치 |
 | 업그레이드 스크립트 | `infra-cdk/test/upgrade_test.py` | 버전 비교, 거부하는 경우, `deploy_orca.sh`로 넘기는 인자 |
+| 배포 스크립트와 메뉴 | `infra-cdk/test/deploy_test.py` | 메뉴, 기존 VPC의 서브넷 확인, 배포한 스택에서 이어받는 설정 |
 | Terraform 구성 | `infra-tf/dedicated/tests/`, `infra-tf/attach/tests/` | 보안 그룹 규칙, 리스너 규칙과 우선순위, 게이트를 켜고 끄는 변수, UserData, 입력 값 검증, 버전을 바꿔도 제거가 실행되지 않는 것 |
 | SSM 설치 도우미 | `infra-tf/test/ssm_run_test.py` | SSM으로 보내는 명령, 입력 값의 셸 인용, 설치 실패, 제거가 destroy를 막지 않는 것 |
 

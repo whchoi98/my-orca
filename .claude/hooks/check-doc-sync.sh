@@ -71,8 +71,11 @@ case "$FILE_PATH" in
     infra-cdk/package.json)
         MESSAGES+=("[doc-sync] CDK 패키지가 바뀌었습니다. CLAUDE.md의 Tech Stack 버전을 맞춥니다(bash tests/run-all.sh structure가 검사). 배포 전에 템플릿 차이를 확인합니다.")
         ;;
+    deploy_guide.sh)
+        MESSAGES+=("[doc-sync] 두 배포 스크립트가 함께 쓰는 대화형 안내가 바뀌었습니다. deploy_orca.sh와 deploy_orca_tf.sh 양쪽의 동작이 달라집니다. 인스턴스 타입 목록은 infra-cdk/lib/orca-stack.ts의 목록과 같아야 하고, 서브넷 분류는 CDK의 Vpc.fromLookup과 같은 기준이어야 합니다. 시험: npm test --prefix infra-cdk (infra-cdk/test/deploy_test.py), bash infra-tf/run-tests.sh. 질문이 달라졌으면 README의 사용법(영어와 한국어 두 구역)을 수정합니다.")
+        ;;
     deploy_orca.sh|deploy_orca_tf.sh|upgrade_orca.sh|cleanup.sh|set_password.sh|get_pairing_url.sh)
-        MESSAGES+=("[doc-sync] 운영 스크립트가 바뀌었습니다. 옵션이나 동작이 달라졌으면 README의 사용법과 환경 설정 표(영어와 한국어 두 구역), CLAUDE.md의 Key Commands를 수정합니다. upgrade_orca.sh는 infra-cdk/test/upgrade_test.py가, deploy_orca_tf.sh와 --tf 옵션은 infra-tf/test/의 시험(bash infra-tf/run-tests.sh)이 다룹니다.")
+        MESSAGES+=("[doc-sync] 운영 스크립트가 바뀌었습니다. 옵션이나 동작이 달라졌으면 README의 사용법과 환경 설정 표(영어와 한국어 두 구역), CLAUDE.md의 Key Commands를 수정합니다. deploy_orca.sh는 infra-cdk/test/deploy_test.py가, upgrade_orca.sh는 infra-cdk/test/upgrade_test.py가, deploy_orca_tf.sh와 --tf 옵션은 infra-tf/test/의 시험(bash infra-tf/run-tests.sh)이 다룹니다.")
         ;;
     docs/infographic/*.py|docs/infographic/build.sh)
         MESSAGES+=("[doc-sync] 인포그래픽 소스가 바뀌었습니다. docs/infographic/build.sh 로 그림을 다시 만들고 검사 결과가 0건인지 봅니다. 한국어 글(T)과 영어 글(T_EN)을 함께 수정하고, 그림에 적은 값의 근거가 달라졌으면 docs/infographic/sources.md도 수정합니다.")

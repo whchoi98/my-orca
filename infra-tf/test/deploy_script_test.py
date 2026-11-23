@@ -53,6 +53,18 @@ case "$1 $2" in
         fi ;;
     "elbv2 describe-target-groups") echo "${FAKE_ORCA_TARGETS:-}" ;;
     "cloudfront-keyvaluestore get-key") [ -n "${FAKE_GATE_SET:-}" ] || exit 254 ;;
+    "ec2 describe-vpcs") cat "$FAKE_DIR/vpcs.json" ;;
+    "ec2 describe-subnets"|"ec2 describe-route-tables")
+        vpc=$(grep -oE 'Values=vpc-[0-9a-f]+' <<<"$all" | head -n 1)
+        cat "$FAKE_DIR/${2#describe-}-${vpc#Values=}.json" ;;
+    "ec2 describe-vpc-endpoints") echo "${FAKE_ENDPOINTS:-}" ;;
+    "ec2 describe-instance-type-offerings")
+        # Answer the requested types that the region offers (all of them unless FAKE_NOT_OFFERED names some).
+        wanted=$(grep -oE 'Name=instance-type,Values=[^ ]+' <<<"$all" | sed 's/.*Values=//' | tr ',' ' ')
+        for type in $wanted; do
+            [[ " ${FAKE_NOT_OFFERED:-} " == *" $type "* ]] || echo "$type"
+        done ;;
+    "ec2 describe-instance-types") echo "${FAKE_CUSTOM_ARCH:-x86_64}" ;;
     *) echo "unexpected aws call: $all" >&2; exit 99 ;;
 esac
 """.replace("__INSTANCE__", INSTANCE).replace("__LISTENER__", LISTENER).replace("__LOAD_BALANCER__", LOAD_BALANCER)
@@ -101,6 +113,58 @@ cat > "$(dirname "$0")/set-password-stdin"
 """
 
 
+VPC = "vpc-0123456789abcdef0"
+SMALL_VPC = "vpc-0123456789abcdef1"
+ONE_ZONE_VPC = "vpc-0123456789abcdef3"
+NO_PRIVATE_VPC = "vpc-0123456789abcdef4"
+
+
+def subnet(number, zone, public=False, name="", tags=None):
+    return {"SubnetId": f"subnet-0123456789abcdef{number}", "AvailabilityZone": f"ap-northeast-2{zone}",
+            "MapPublicIpOnLaunch": public, "Tags": [{"Key": "Name", "Value": name}] + (tags or [])}
+
+
+def write_vpc_fixture(directory):
+    """Two VPCs. The first has every kind of subnet the classification tells apart; the second
+    has one public subnet and nothing else, so it cannot take the deployment."""
+    (directory / "vpcs.json").write_text(json.dumps({"Vpcs": [
+        {"VpcId": VPC, "CidrBlock": "10.0.0.0/16", "Tags": [{"Key": "Name", "Value": "lab-vpc"}]},
+        {"VpcId": SMALL_VPC, "CidrBlock": "172.31.0.0/16", "IsDefault": True},
+    ]}))
+    (directory / f"subnets-{VPC}.json").write_text(json.dumps({"Subnets": [
+        subnet(1, "a", public=True, name="pub-a"),           # public: assigns public addresses
+        subnet(2, "b", name="pub-b"),                        # public: its route table goes to an IGW
+        subnet(3, "a", name="priv-a"),                       # private: default route to a NAT gateway
+        subnet(4, "b", name="priv-b"),                       # private: main table, default route to a TGW
+        subnet(5, "a", name="iso-a"),                        # isolated: no way out
+        subnet(6, "a", public=True, name="tagged", tags=[{"Key": "aws-cdk:subnet-type", "Value": "Isolated"}]),
+        subnet(7, "a", public=True, name="pub-a2"),          # public, but zone a already has one for the ALB
+    ]}))
+    (directory / f"route-tables-{VPC}.json").write_text(json.dumps({"RouteTables": [
+        {"Associations": [{"SubnetId": "subnet-0123456789abcdef2"}],
+         "Routes": [{"GatewayId": "local", "DestinationCidrBlock": "10.0.0.0/16"},
+                    {"GatewayId": "igw-0123456789abcdef0", "DestinationCidrBlock": "0.0.0.0/0"}]},
+        {"Associations": [{"SubnetId": "subnet-0123456789abcdef3"}],
+         "Routes": [{"NatGatewayId": "nat-0123456789abcdef0", "DestinationCidrBlock": "0.0.0.0/0"}]},
+        {"Associations": [{"SubnetId": "subnet-0123456789abcdef5"}],
+         "Routes": [{"GatewayId": "local", "DestinationCidrBlock": "10.0.0.0/16"}]},
+        {"Associations": [{"Main": True}],
+         "Routes": [{"TransitGatewayId": "tgw-0123456789abcdef0", "DestinationCidrBlock": "0.0.0.0/0"}]},
+    ]}))
+    (directory / f"subnets-{SMALL_VPC}.json").write_text(json.dumps({"Subnets": [subnet(8, "a", public=True, name="only")]}))
+    (directory / f"route-tables-{SMALL_VPC}.json").write_text(json.dumps({"RouteTables": []}))
+    # Public subnets in one Availability Zone only (an ALB needs two), with a private subnet.
+    (directory / f"subnets-{ONE_ZONE_VPC}.json").write_text(json.dumps({"Subnets": [
+        subnet("a", "a", public=True, name="pub-1"), subnet("b", "a", public=True, name="pub-2"), subnet("c", "a", name="priv")]}))
+    (directory / f"route-tables-{ONE_ZONE_VPC}.json").write_text(json.dumps({"RouteTables": [
+        {"Associations": [{"SubnetId": "subnet-0123456789abcdefc"}],
+         "Routes": [{"NatGatewayId": "nat-0123456789abcdef1", "DestinationCidrBlock": "0.0.0.0/0"}]}]}))
+    # Public subnets in two zones, but the only other subnet is isolated: nowhere to put the server.
+    (directory / f"subnets-{NO_PRIVATE_VPC}.json").write_text(json.dumps({"Subnets": [
+        subnet("d", "a", public=True, name="pub-a"), subnet("e", "b", public=True, name="pub-b"), subnet("f", "a", name="iso")]}))
+    (directory / f"route-tables-{NO_PRIVATE_VPC}.json").write_text(json.dumps({"RouteTables": []}))
+
+
 def write_exec(path, text):
     path.write_text(text)
     path.chmod(path.stat().st_mode | stat.S_IXUSR)
@@ -111,6 +175,8 @@ class DeployScriptTest(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.tmp)
         shutil.copy(SCRIPT, self.tmp / "deploy_orca_tf.sh")
+        shutil.copy(SCRIPT.parent / "deploy_guide.sh", self.tmp / "deploy_guide.sh")
+        write_vpc_fixture(self.tmp)
         write_exec(self.tmp / "set_password.sh", FAKE_SET_PASSWORD)
         for mode in ("dedicated", "attach"):
             (self.tmp / "infra-tf" / mode).mkdir(parents=True)
@@ -246,24 +312,151 @@ class DeployScriptTest(unittest.TestCase):
         self.assertEqual(self.lines("set-password-args"), [])
 
     def test_interactive_password_keeps_its_spaces(self):
-        answers = "\n\n" + "  spaced pass  \n" + "  spaced pass  \n" + "y\n"
+        answers = "\n\n\n\n" + "  spaced pass  \n" + "  spaced pass  \n" + "y\n"
         r = self.run_script(stdin=answers)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertEqual((self.tmp / "set-password-stdin").read_text(), "  spaced pass  \n")
 
     def test_interactive_decline_applies_nothing(self):
-        r = self.run_script(stdin="\n\n\nn\n")
+        r = self.run_script(stdin="\n\n\n\n\nn\n")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertEqual(self.terraform("apply"), [])
         self.assertFalse(self.saved_path("dedicated").exists())
         self.assertEqual(self.leftovers("dedicated"), [])
 
+    # ---------------- the guide (deploy_guide.sh) ----------------
+    def test_guide_new_vpc_with_a_name_and_a_type_from_the_menu(self):
+        # region: 2nd in the list, VPC: new, its name, instance type: 9th, no password, yes
+        r = self.run_script(stdin="2\n1\nlab-net\n9\n\ny\n")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.planned(), {
+            "region": "ap-northeast-1", "orca_version": "1.4.270", "vpc_name": "lab-net", "instance_type": "t4g.xlarge",
+        })
+        self.assertEqual(len(self.terraform("apply")), 1)
+
+    def test_guide_existing_vpc_from_the_list(self):
+        # region default, VPC: existing, 1st VPC, EC2 subnet: 2nd private one, type default, no password, yes
+        r = self.run_script(stdin="\n2\n1\n2\n\n\ny\n", FAKE_ENDPOINTS="vpce-0123456789abcdef0\tvpce-0123456789abcdef1")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.planned(), {
+            "region": "ap-northeast-2", "orca_version": "1.4.270", "vpc_id": VPC,
+            # One public subnet per Availability Zone for the ALB.
+            "alb_subnet_ids": ["subnet-0123456789abcdef1", "subnet-0123456789abcdef2"],
+            "instance_subnet_id": "subnet-0123456789abcdef4",
+            # The VPC already has SSM endpoints: a second set would clash on private DNS.
+            "create_ssm_endpoints": False,
+            "instance_type": "r6g.xlarge",
+        })
+        # The subnets are shown with the kind CDK would give them.
+        shown = [" ".join(line.split()) for line in r.stdout.splitlines()]
+        for line in ("subnet-0123456789abcdef1 ap-northeast-2a 퍼블릭 pub-a", "subnet-0123456789abcdef2 ap-northeast-2b 퍼블릭 pub-b",
+                     "subnet-0123456789abcdef7 ap-northeast-2a 퍼블릭 pub-a2",
+                     "subnet-0123456789abcdef3 ap-northeast-2a 프라이빗 priv-a", "subnet-0123456789abcdef4 ap-northeast-2b 프라이빗 priv-b",
+                     "subnet-0123456789abcdef5 ap-northeast-2a 격리 iso-a", "subnet-0123456789abcdef6 ap-northeast-2a 격리 tagged"):
+            self.assertIn(line, shown)
+
+    def test_guide_goes_back_when_the_vpc_cannot_be_used(self):
+        # VPC: existing, 2nd VPC (one public subnet only), then new VPC with the default name
+        r = self.run_script(stdin="\n2\n2\n1\n\n\n\ny\n")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("이 VPC는 쓸 수 없습니다", r.stdout)
+        self.assertNotIn("vpc_id", self.planned())
+        self.assertEqual(self.planned()["vpc_name"], "orca-vpc")
+
+    def test_guide_takes_a_vpc_id_and_refuses_one_that_is_not_listed(self):
+        r = self.run_script(stdin=f"\n2\nvpc-0123456789abcdef9\n2\n{VPC}\n\n\n\ny\n")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("목록에 없는 값입니다", r.stdout)
+        self.assertEqual(self.planned()["vpc_id"], VPC)
+        self.assertEqual(self.planned()["instance_subnet_id"], "subnet-0123456789abcdef3")
+        self.assertNotIn("create_ssm_endpoints", self.planned())
+
+    def test_vpc_id_alone_finds_its_subnets(self):
+        # --yes asks nothing: an answer waiting on stdin must not pick the second subnet.
+        r = self.run_script("--vpc-id", VPC, "--yes", stdin="2\n")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertNotIn("EC2를 둘 프라이빗 서브넷을 고릅니다", r.stdout)
+        self.assertEqual(self.planned()["alb_subnet_ids"], ["subnet-0123456789abcdef1", "subnet-0123456789abcdef2"])
+        self.assertEqual(self.planned()["instance_subnet_id"], "subnet-0123456789abcdef3")
+
+    def test_vpc_id_that_cannot_be_used_stops_before_the_plan(self):
+        for vpc in (SMALL_VPC, ONE_ZONE_VPC, NO_PRIVATE_VPC):
+            with self.subTest(vpc):
+                r = self.run_script("--vpc-id", vpc, "--yes")
+                self.assertNotEqual(r.returncode, 0)
+                self.assertIn("쓸 수 없습니다", r.stdout + r.stderr)
+                self.assertEqual(self.terraform("plan"), [])
+
+    def test_plan_asks_nothing(self):
+        # Answers waiting on stdin (region 2, existing VPC...) must not be read.
+        r = self.run_script("--plan", stdin="2\n2\n1\n2\n9\n")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        for title in ("[리전]", "[VPC]", "[인스턴스 타입]"):
+            self.assertNotIn(title, r.stdout)
+        self.assertEqual(self.planned(), {"orca_version": "1.4.270", "region": "ap-northeast-2"})
+
+    def test_given_subnets_are_not_looked_up_again(self):
+        r = self.run_script("--vpc-id", SMALL_VPC, "--alb-subnets", "subnet-0123456789abcdef1,subnet-0123456789abcdef2",
+                            "--instance-subnet", "subnet-0123456789abcdef3", "--plan")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertFalse(any("describe-subnets" in c for c in self.lines("aws-calls")))
+
+    def test_endpoints_are_kept_when_asked_for_or_already_decided(self):
+        r = self.run_script("--vpc-id", VPC, "--skip-vpc-endpoints", "--plan", FAKE_ENDPOINTS="vpce-0123456789abcdef0")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertFalse(any("describe-vpc-endpoints" in c for c in self.lines("aws-calls")))
+        self.assertEqual(self.planned()["create_ssm_endpoints"], False)
+
+    def test_a_deployed_server_keeps_its_vpc_without_questions(self):
+        self.save("dedicated", region="ap-northeast-2", orca_version="1.4.260", vpc_id=VPC, instance_type="m7g.xlarge",
+                  alb_subnet_ids=["subnet-0123456789abcdef1", "subnet-0123456789abcdef2"], instance_subnet_id="subnet-0123456789abcdef3")
+        # Only the password prompt and the confirmation are left.
+        r = self.run_script(stdin="\ny\n", FAKE_STATE="aws_instance.orca", FAKE_ENDPOINTS="vpce-0123456789abcdef0")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.planned()["vpc_id"], VPC)
+        self.assertEqual(self.planned()["instance_type"], "m7g.xlarge")
+        # Its own endpoints are in that VPC by now; they must not be taken for someone else's.
+        self.assertNotIn("create_ssm_endpoints", self.planned())
+        self.assertFalse(any("describe-vpcs" in c or "describe-vpc-endpoints" in c for c in self.lines("aws-calls")))
+
+    def test_guide_instance_type_outside_the_list(self):
+        # type: 0 (custom), then a type the region does not have, then one it has
+        r = self.run_script("--region", "ap-northeast-2", stdin="1\n\n0\nz9.huge\n0\nc7g.xlarge\n\ny\n",
+                            FAKE_NOT_OFFERED="z9.huge", FAKE_CUSTOM_ARCH="arm64")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("z9.huge 은 ap-northeast-2 리전에 없는 타입입니다", r.stdout)
+        self.assertEqual(self.planned()["instance_type"], "c7g.xlarge")
+        self.assertIn("aarch64 RPM", r.stdout)
+
+    def test_guide_refuses_a_listed_type_the_region_does_not_offer(self):
+        r = self.run_script("--region", "ap-northeast-2", stdin="1\n\n1\n3\n\ny\n", FAKE_NOT_OFFERED="r6g.xlarge")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("r6g.xlarge    ARM64 Graviton, 4 vCPU, 32GB  (이 리전에서 제공하지 않음)", r.stdout)
+        self.assertIn("r6g.xlarge 은 ap-northeast-2 리전에서 제공하지 않습니다", r.stdout)
+        self.assertEqual(self.planned()["instance_type"], "r7g.xlarge")
+
+    def test_guide_region_by_code_and_bad_input(self):
+        r = self.run_script(stdin="99\nseoul\neu-north-1\n\n\n\n\ny\n")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(r.stdout.count("목록의 번호나 리전 코드"), 2)
+        self.assertEqual(self.planned()["region"], "eu-north-1")
+
+    def test_options_skip_their_questions(self):
+        # Region, VPC and type are given: what is left is the EC2 subnet, the password and the confirmation.
+        r = self.run_script("--region", "us-west-2", "--vpc-id", VPC, "--instance-type", "m7g.xlarge", stdin="2\n\ny\n")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        for title in ("[리전]", "[VPC]", "[인스턴스 타입]"):
+            self.assertNotIn(title, r.stdout)
+        self.assertEqual(self.planned()["region"], "us-west-2")
+        self.assertEqual(self.planned()["instance_type"], "m7g.xlarge")
+        self.assertEqual(self.planned()["instance_subnet_id"], "subnet-0123456789abcdef4")
+
     def test_bad_arguments(self):
         for args in (["--attach", "Host", "--instance-type", "r6g.xlarge"], ["--attach-instance", INSTANCE],
                      ["--attach", "Host", "--attach-instance", INSTANCE, "--attach-listener", LISTENER],
-                     ["--name"], ["--no-such-option"]):
+                     ["--name"], ["--name", "--yes"], ["--no-such-option"]):
             with self.subTest(args):
-                r = self.run_script(*args, "--plan")
+                r = self.run_script("--plan", *args)
                 self.assertNotEqual(r.returncode, 0)
                 self.assertEqual(self.lines("terraform-calls"), [])
 

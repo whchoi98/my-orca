@@ -4,7 +4,7 @@
 #
 # 사용법:
 #   bash deploy_orca.sh --attach VscodeServerStack --yes   # 기존 VS Code 서버에 Orca 추가 (OrcaOnVscodeStack)
-#   bash deploy_orca.sh                     # 대화형 (Orca 전용 VPC/ALB/EC2를 새로 만듦)
+#   bash deploy_orca.sh                     # 대화형: 번호 메뉴로 리전, VPC(새로 만들기 또는 기존 VPC), 인스턴스 타입을 고름
 #   bash deploy_orca.sh --yes               # 기본값으로 바로 배포 (ap-northeast-2, r6g.xlarge, 새 VPC)
 #   bash deploy_orca.sh --region us-west-2 --instance-type r7g.xlarge --yes
 #   bash deploy_orca.sh --vpc-id vpc-0123456789abcdef0 --skip-vpc-endpoints --yes
@@ -16,13 +16,19 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CDK_DIR="$SCRIPT_DIR/infra-cdk"
+# 리전, VPC, 인스턴스 타입을 고르는 대화형 안내 (guide_로 시작하는 함수)
+# shellcheck source=deploy_guide.sh
+source "$SCRIPT_DIR/deploy_guide.sh"
 
 # STACK_NAME 환경 변수나 --stack-name이 없으면 기본 이름을 씁니다 (--attach는 OrcaOnVscodeStack).
 STACK_NAME_SET=false
 [ -n "${STACK_NAME:-}" ] && STACK_NAME_SET=true
 STACK_NAME="${STACK_NAME:-OrcaServerStack}"
 REGION="${AWS_REGION:-${AWS_DEFAULT_REGION:-ap-northeast-2}}"
+REGION_SET=false
 INSTANCE_TYPE="r6g.xlarge"
+INSTANCE_TYPE_SET=false
+VPC_NAME_SET=false
 ORCA_VERSION=""
 EXISTING_VPC_ID=""
 VPC_NAME="orca-vpc"
@@ -43,11 +49,11 @@ usage() {
                              호스트 스택은 수정하지 않고, Orca 전용 CloudFront·암호 게이트·ALB 규칙만 만듭니다.
                              이 모드에서 --instance-type/--vpc-* 옵션은 쓰지 않습니다 (기본 스택: OrcaOnVscodeStack).
   --region <region>          배포 리전 (기본: AWS_REGION 또는 ap-northeast-2)
-  --instance-type <type>     EC2 인스턴스 타입 (기본: r6g.xlarge)
+  --instance-type <type>     EC2 인스턴스 타입 (기본: r6g.xlarge, 기존 스택은 지금 타입 유지)
   --orca-version <x.y.z>     설치할 Orca 릴리스 (기본: GitHub 최신 릴리스, 기존 스택은 이전 값 유지)
-  --vpc-id <vpc-id>          기존 VPC 사용 (기본: 새 VPC 10.253.0.0/16 생성)
+  --vpc-id <vpc-id>          기존 VPC 사용 (기본: 새 VPC 10.253.0.0/16 생성). 서브넷을 배포 전에 확인합니다.
   --vpc-name <name>          새 VPC Name 태그 (기본: orca-vpc)
-  --skip-vpc-endpoints       SSM VPC 엔드포인트 생성 생략 (기존 VPC에 이미 있을 때)
+  --skip-vpc-endpoints       SSM VPC 엔드포인트 생성 생략 (기존 VPC에 이미 있으면 주지 않아도 생략합니다)
   --no-password-gate         CloudFront 접속 암호 게이트를 만들지 않음 (Orca 페어링만 사용)
   --no-pairing-output        페어링 링크를 스택 출력에 넣지 않음 (get_pairing_url.sh로만 조회)
   --stack-name <name>        스택 이름 (기본: OrcaServerStack)
@@ -57,11 +63,11 @@ EOF
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
-        --region) REGION="$2"; shift 2 ;;
-        --instance-type) INSTANCE_TYPE="$2"; shift 2 ;;
+        --region) REGION="$2"; REGION_SET=true; shift 2 ;;
+        --instance-type) INSTANCE_TYPE="$2"; INSTANCE_TYPE_SET=true; shift 2 ;;
         --orca-version) ORCA_VERSION="${2#v}"; shift 2 ;;
         --vpc-id) EXISTING_VPC_ID="$2"; shift 2 ;;
-        --vpc-name) VPC_NAME="$2"; shift 2 ;;
+        --vpc-name) VPC_NAME="$2"; VPC_NAME_SET=true; shift 2 ;;
         --skip-vpc-endpoints) SKIP_VPC_ENDPOINTS=true; shift ;;
         --no-password-gate) PASSWORD_GATE=false; shift ;;
         --no-pairing-output) PAIRING_OUTPUT=false; shift ;;
@@ -97,21 +103,92 @@ CALLER_ARN=$(aws sts get-caller-identity --query Arn --output text)
 info "계정: $ACCOUNT_ID ($CALLER_ARN)"
 
 # -------------------------------------------------------
-# 대화형 입력 (--yes가 없을 때)
+# 대화형 안내 (--yes가 없을 때). 옵션으로 준 값은 묻지 않습니다.
 # -------------------------------------------------------
-if ! "$ASSUME_YES" && [ -n "$ATTACH_TO" ]; then
-    read -r -p "  리전 [$REGION]: " INPUT && REGION="${INPUT:-$REGION}"
-elif ! "$ASSUME_YES"; then
-    read -r -p "  리전 [$REGION]: " INPUT && REGION="${INPUT:-$REGION}"
-    echo "  인스턴스 타입 (ARM64 Graviton 권장): r6g.xlarge r6g.2xlarge r7g.xlarge r7g.2xlarge m7g.xlarge m7g.2xlarge t4g.2xlarge"
-    read -r -p "  인스턴스 타입 [$INSTANCE_TYPE]: " INPUT && INSTANCE_TYPE="${INPUT:-$INSTANCE_TYPE}"
-    read -r -p "  기존 VPC ID (빈값이면 새 VPC 생성) [${EXISTING_VPC_ID}]: " INPUT && EXISTING_VPC_ID="${INPUT:-$EXISTING_VPC_ID}"
+if ! "$ASSUME_YES" && ! "$REGION_SET"; then
+    guide_region "$REGION"
+    REGION="$GUIDE_REGION"
 fi
 export AWS_REGION="$REGION" CDK_DEFAULT_REGION="$REGION"
 
 STACK_EXISTS=false
 if aws cloudformation describe-stacks --stack-name "$STACK_NAME" --region "$REGION" >/dev/null 2>&1; then
     STACK_EXISTS=true
+fi
+
+# -------------------------------------------------------
+# 전용 서버: VPC와 인스턴스 타입
+# -------------------------------------------------------
+VPC_SUMMARY=""
+if [ -z "$ATTACH_TO" ]; then
+    VPC_DECIDED=false
+    if "$STACK_EXISTS"; then
+        # 이미 배포한 스택은 지금 설정을 이어받습니다. VPC가 바뀌면 ALB와 EC2(EBS의 작업 내용 포함)를 모두 새로 만들게 됩니다.
+        IFS=$'\t' read -r CUR_TYPE CUR_VPC_NAME CUR_VPC < <(aws cloudformation describe-stacks --stack-name "$STACK_NAME" --region "$REGION" --output text \
+            --query "[Stacks[0].Parameters[?ParameterKey=='InstanceType'].ParameterValue | [0], Stacks[0].Parameters[?ParameterKey=='VpcName'].ParameterValue | [0], Stacks[0].Outputs[?OutputKey=='VPCId'].OutputValue | [0]]" 2>/dev/null) || true
+        OWNED=$(aws cloudformation list-stack-resources --stack-name "$STACK_NAME" --region "$REGION" --output text \
+            --query "StackResourceSummaries[?ResourceType=='AWS::EC2::VPC' || ResourceType=='AWS::EC2::VPCEndpoint'].[ResourceType,PhysicalResourceId]" 2>/dev/null || true)
+        OWNS_VPC=false
+        OWNED_ENDPOINTS=""
+        while read -r KIND ID; do
+            case "$KIND" in
+                AWS::EC2::VPC) OWNS_VPC=true ;;
+                AWS::EC2::VPCEndpoint) OWNED_ENDPOINTS="$OWNED_ENDPOINTS $ID" ;;
+            esac
+        done <<<"$OWNED"
+        if [[ "${CUR_VPC:-}" == vpc-* ]]; then
+            VPC_DECIDED=true
+            if "$OWNS_VPC"; then
+                [ -z "$EXISTING_VPC_ID" ] || die "$STACK_NAME 은 스택이 만든 VPC($CUR_VPC)에 배포되어 있습니다. VPC를 바꾸려면 bash cleanup.sh 로 지우고 다시 배포하세요."
+                VPC_SUMMARY="스택이 만든 VPC 유지 ($CUR_VPC)"
+            else
+                [ -z "$EXISTING_VPC_ID" ] || [ "$EXISTING_VPC_ID" = "$CUR_VPC" ] \
+                    || die "$STACK_NAME 은 기존 VPC $CUR_VPC 에 배포되어 있습니다. VPC를 바꾸려면 bash cleanup.sh 로 지우고 다시 배포하세요."
+                EXISTING_VPC_ID="$CUR_VPC"
+                VPC_SUMMARY="기존 VPC 유지 ($CUR_VPC)"
+            fi
+            if ! "$VPC_NAME_SET" && [ -n "${CUR_VPC_NAME:-}" ] && [ "$CUR_VPC_NAME" != None ]; then
+                VPC_NAME="$CUR_VPC_NAME"
+            fi
+            # 이 스택이 만든 SSM 엔드포인트가 없으면 이전 배포가 만들지 않은 것입니다. 그대로 둡니다.
+            if [ -z "$OWNED_ENDPOINTS" ]; then
+                SKIP_VPC_ENDPOINTS=true
+            fi
+            if ! "$INSTANCE_TYPE_SET" && [ -n "${CUR_TYPE:-}" ] && [ "$CUR_TYPE" != None ]; then
+                INSTANCE_TYPE="$CUR_TYPE"
+            fi
+            info "기존 스택의 설정을 이어받습니다: VPC $CUR_VPC, 인스턴스 타입 $INSTANCE_TYPE"
+        fi
+    fi
+    if ! "$VPC_DECIDED"; then
+        if ! "$ASSUME_YES" && [ -z "$EXISTING_VPC_ID" ]; then
+            guide_vpc "$REGION" "$VPC_NAME" "10.253.0.0/16, 퍼블릭과 프라이빗 서브넷 둘씩, NAT Gateway 하나"
+            EXISTING_VPC_ID="$GUIDE_VPC_ID"
+            VPC_NAME="$GUIDE_VPC_NAME"
+        elif [ -n "$EXISTING_VPC_ID" ]; then
+            # --vpc-id로 준 VPC도 배포 전에 확인합니다. 맞는 서브넷이 없으면 CDK가 스택을 만드는 중에 실패합니다.
+            guide_inspect_vpc "$REGION" "$EXISTING_VPC_ID" || die "VPC $EXISTING_VPC_ID ($REGION)를 읽지 못했습니다."
+            "$GUIDE_VPC_OK" || die "VPC $EXISTING_VPC_ID 는 이 배포에 쓸 수 없습니다 (위 안내 참고)."
+        fi
+        if [ -n "$EXISTING_VPC_ID" ] && ! "$SKIP_VPC_ENDPOINTS"; then
+            guide_ssm_endpoints "$REGION" "$EXISTING_VPC_ID"
+            if "$GUIDE_SKIP_ENDPOINTS"; then
+                SKIP_VPC_ENDPOINTS=true
+            fi
+        fi
+        if [ -n "$EXISTING_VPC_ID" ]; then
+            VPC_SUMMARY="기존 VPC $EXISTING_VPC_ID"
+        else
+            VPC_SUMMARY="새 VPC 10.253.0.0/16 ($VPC_NAME)"
+        fi
+    fi
+    if ! "$ASSUME_YES" && ! "$INSTANCE_TYPE_SET"; then
+        guide_instance_type "$REGION" "$INSTANCE_TYPE" false
+        INSTANCE_TYPE="$GUIDE_INSTANCE_TYPE"
+    fi
+    # 목록 밖의 타입은 CloudFormation이 파라미터 검증에서 거절합니다. 그 전에 알립니다.
+    guide_instance_in_list "$INSTANCE_TYPE" \
+        || die "인스턴스 타입 $INSTANCE_TYPE 은 이 스택이 받는 목록에 없습니다: $(guide_instance_names)"
 fi
 
 # -------------------------------------------------------
@@ -259,7 +336,8 @@ if [ -n "$ATTACH_TO" ]; then
     info "추가되는 것: Orca 전용 CloudFront, ALB 규칙(우선순위 5/10), 보안 그룹 규칙(6768/6769), 역할 정책"
 else
     info "인스턴스: $INSTANCE_TYPE"
-    info "VPC: ${EXISTING_VPC_ID:-새 VPC 10.253.0.0/16 ($VPC_NAME)}"
+    info "VPC: $VPC_SUMMARY"
+    info "SSM 엔드포인트: $( "$SKIP_VPC_ENDPOINTS" && echo '만들지 않음' || echo '새로 만듦' )"
     info "IAM Role: ${ROLE_BASE}${ROLE_NAME_SUFFIX}"
 fi
 if "$PASSWORD_GATE"; then

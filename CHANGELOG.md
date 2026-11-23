@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `upgrade_orca.sh` to upgrade Orca on an existing server in place, with a sha256 check of the release RPM and no reboot
 - Add a Terraform deployment (`infra-tf/`, `deploy_orca_tf.sh`) that creates the same structure as the CDK stacks in both deployment modes, with `--plan` to show the plan only and inputs that are kept between runs
 - Add `--tf` to `get_pairing_url.sh`, `set_password.sh` and `cleanup.sh` so that they work on a Terraform deployment
+- Add numbered menus to both deployment scripts for the region, the VPC (a new one or one of the VPCs in the account) and the instance type, with a check of the subnets of an existing VPC before the deployment
 - Add four figures to the README, the architecture document and the upgrade runbook: access path and protection layers, the two deployment modes, the first access procedure and the upgrade procedure
 
 ### Changed
@@ -34,6 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change the default Orca version of both stacks to 1.4.269
 - Install `dbus-tools` with the runtime dependencies, because the Orca RPM requires `/usr/bin/dbus-send` from 1.4.269
 - Update aws-cdk-lib to 2.278.0 and aws-cdk to 2.1149.0
+- Keep the VPC and the instance type of a deployed dedicated server stack when `deploy_orca.sh` runs again, and stop when another VPC is given
+- Skip the SSM VPC endpoints without `--skip-vpc-endpoints` when the existing VPC already has them
+- Find the subnets of an existing VPC in `deploy_orca_tf.sh` when `--alb-subnets` and `--instance-subnet` are left out
 
 ### Fixed
 
@@ -63,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 릴리스 RPM의 sha256을 확인하고 재부팅 없이 기존 서버의 Orca를 올리는 `upgrade_orca.sh` 추가
 - 두 배포 방식 모두에서 CDK 스택과 같은 구조를 만드는 Terraform 배포(`infra-tf/`, `deploy_orca_tf.sh`) 추가. 계획만 보여 주는 `--plan`과 실행 사이에 유지되는 입력 값 포함
 - Terraform 배포에서도 쓸 수 있도록 `get_pairing_url.sh`, `set_password.sh`, `cleanup.sh`에 `--tf` 옵션 추가
+- 두 배포 스크립트에 리전, VPC(새로 만들기 또는 계정의 기존 VPC), 인스턴스 타입을 고르는 번호 메뉴 추가. 기존 VPC는 배포 전에 서브넷을 확인
 - README, 아키텍처 문서, 업그레이드 런북에 그림 네 개(접속 경로와 보호 계층, 두 가지 배포 방식, 첫 접속 절차, 업그레이드 절차) 추가
 
 ### Changed
@@ -70,6 +75,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 두 스택의 기본 Orca 버전을 1.4.269로 변경
 - Orca RPM이 1.4.269부터 `/usr/bin/dbus-send`를 요구해 실행 의존 패키지에 `dbus-tools` 설치 추가로 변경
 - aws-cdk-lib을 2.278.0으로, aws-cdk를 2.1149.0으로 변경
+- `deploy_orca.sh`를 다시 실행할 때 이미 배포한 전용 서버 스택의 VPC와 인스턴스 타입을 유지하고 다른 VPC를 주면 멈추도록 변경
+- 기존 VPC에 SSM VPC 엔드포인트가 이미 있으면 `--skip-vpc-endpoints` 없이도 생성을 생략하도록 변경
+- `deploy_orca_tf.sh`에서 `--alb-subnets`와 `--instance-subnet`을 주지 않으면 기존 VPC의 서브넷을 찾도록 변경
 
 ### Fixed
 

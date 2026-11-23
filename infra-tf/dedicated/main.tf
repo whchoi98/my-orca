@@ -243,7 +243,10 @@ resource "aws_instance" "orca" {
     # the user's repositories. UserData only runs at first boot, so a changed orca_version must
     # not restart the instance either. Rebuild deliberately with:
     #   terraform apply -replace=aws_instance.orca
-    ignore_changes = [ami, user_data]
+    # Tags: account automation (SSM, monitoring agents) tags instances after they start. Without
+    # this, every later apply would remove those tags and the automation would add them again
+    # (seen on 2026-11-23: a tag added to the instance showed up as a change on the next plan).
+    ignore_changes = [ami, user_data, tags, tags_all]
   }
 
   depends_on = [

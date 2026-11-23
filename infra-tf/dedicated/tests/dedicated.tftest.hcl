@@ -6,6 +6,22 @@ mock_provider "aws" {
   source = "./tests/mocks"
 }
 
+# Every input is set here, so that the inputs a deployment saved next to this configuration
+# (orca.auto.tfvars.json, which terraform test also loads) cannot change what is tested.
+variables {
+  region               = "ap-northeast-2"
+  name                 = "orca-server"
+  instance_type        = "r6g.xlarge"
+  orca_version         = "1.4.269"
+  password_gate        = true
+  vpc_cidr             = "10.253.0.0/16"
+  vpc_name             = "orca-vpc"
+  vpc_id               = null
+  alb_subnet_ids       = []
+  instance_subnet_id   = null
+  create_ssm_endpoints = true
+}
+
 run "defaults" {
   command = apply
 

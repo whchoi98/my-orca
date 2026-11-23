@@ -8,7 +8,7 @@
 #   bash deploy_orca_tf.sh --attach VscodeServerStack --yes   # 기존 VS Code 서버에 Orca 추가 (infra-tf/attach)
 #   bash deploy_orca_tf.sh --attach-instance i-0123456789abcdef0 --attach-listener <리스너 ARN> --yes
 #                                                             # CloudFormation으로 만들지 않은 서버에 추가
-#   bash deploy_orca_tf.sh                    # 대화형 (Orca 전용 VPC/ALB/EC2를 새로 만듦, infra-tf/dedicated)
+#   bash deploy_orca_tf.sh                    # 대화형: 번호 메뉴로 리전, VPC(새로 만들기 또는 기존 VPC), 인스턴스 타입을 고름
 #   bash deploy_orca_tf.sh --yes              # 기본값으로 바로 배포 (ap-northeast-2, r6g.xlarge, 새 VPC)
 #   bash deploy_orca_tf.sh --plan             # 계획만 보고 끝냄 (아무것도 만들지 않음)
 #   ORCA_WEB_PASSWORD='...' bash deploy_orca_tf.sh --yes   # 접속 암호까지 비대화형으로 설정
@@ -19,6 +19,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# 리전, VPC, 인스턴스 타입을 고르는 대화형 안내 (guide_로 시작하는 함수)
+# shellcheck source=deploy_guide.sh
+source "$SCRIPT_DIR/deploy_guide.sh"
 
 REGION="${AWS_REGION:-${AWS_DEFAULT_REGION:-ap-northeast-2}}"
 REGION_SET=false
@@ -48,11 +51,11 @@ usage() {
   --name <name>                배포 이름. 모든 리소스 이름의 앞부분 (기본: orca-server, 기존 서버에 추가하면 orca-on-vscode)
   --instance-type <type>       EC2 인스턴스 타입 (기본: r6g.xlarge, 전용 서버)
   --orca-version <x.y.z>       설치할 Orca 릴리스 (기본: 저장된 값, 없으면 GitHub 최신 릴리스)
-  --vpc-id <vpc-id>            기존 VPC 사용 (--alb-subnets, --instance-subnet과 함께. 기본: 새 VPC 10.253.0.0/16)
-  --alb-subnets <a,b>          기존 VPC의 퍼블릭 서브넷 둘 이상 (가용 영역이 달라야 함)
-  --instance-subnet <id>       기존 VPC의 프라이빗 서브넷 (인터넷으로 나가는 경로가 있어야 함)
+  --vpc-id <vpc-id>            기존 VPC 사용 (기본: 새 VPC 10.253.0.0/16). 서브넷을 주지 않으면 VPC에서 찾습니다.
+  --alb-subnets <a,b>          기존 VPC의 퍼블릭 서브넷 둘 이상 (가용 영역이 달라야 함. 기본: 영역마다 하나씩 자동 선택)
+  --instance-subnet <id>       기존 VPC의 프라이빗 서브넷 (인터넷으로 나가는 경로가 있어야 함. 기본: 첫 프라이빗 서브넷)
   --vpc-name <name>            새 VPC Name 태그 (기본: orca-vpc)
-  --skip-vpc-endpoints         SSM VPC 엔드포인트 생성 생략 (기존 VPC에 이미 있을 때)
+  --skip-vpc-endpoints         SSM VPC 엔드포인트 생성 생략 (기존 VPC에 이미 있으면 주지 않아도 생략합니다)
   --no-password-gate           CloudFront 접속 암호 게이트를 만들지 않음 (Orca 페어링만 사용)
   --password-gate              접속 암호 게이트를 다시 만듦 (--no-password-gate로 배포한 뒤)
   --plan                       계획만 보여 주고 끝냄
@@ -60,7 +63,8 @@ usage() {
 EOF
 }
 
-need_value() { [ "$#" -ge 2 ] || { echo "$1 옵션에 값이 필요합니다 (--help 참고)" >&2; exit 1; }; }
+# 값이 빠지면 다음 옵션을 값으로 삼키게 됩니다(--name --yes). 그 경우도 막습니다.
+need_value() { [ "$#" -ge 2 ] && [[ "$2" != --* ]] || { echo "$1 옵션에 값이 필요합니다 (--help 참고)" >&2; exit 1; }; }
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -149,18 +153,30 @@ CALLER_ARN=$(aws sts get-caller-identity --query Arn --output text)
 info "계정: $ACCOUNT_ID ($CALLER_ARN)"
 
 # -------------------------------------------------------
-# 대화형 입력 (--yes가 없을 때)
+# 대화형 안내 (--yes와 --plan이 없을 때). 옵션으로 준 값과 저장된 값은 묻지 않습니다.
 # -------------------------------------------------------
+INTERACTIVE=false
 if ! "$ASSUME_YES" && ! "$PLAN_ONLY"; then
-    read -r -p "  리전 [$REGION]: " INPUT && REGION="${INPUT:-$REGION}"
-    if [ "$MODE" = dedicated ] && [ -z "$(saved instance_type)" ] && [[ " ${OVERRIDES[*]-} " != *":instance_type="* ]]; then
-        echo "  인스턴스 타입 (ARM64 Graviton 권장): r6g.xlarge r6g.2xlarge r7g.xlarge r7g.2xlarge m7g.xlarge m7g.2xlarge t4g.2xlarge"
-        read -r -p "  인스턴스 타입 [r6g.xlarge]: " INPUT
-        [ -z "$INPUT" ] || OVERRIDES+=("s:instance_type=$INPUT")
-    fi
+    INTERACTIVE=true
+fi
+if "$INTERACTIVE" && ! "$REGION_SET" && [ -z "$SAVED_REGION" ]; then
+    guide_region "$REGION"
+    REGION="$GUIDE_REGION"
 fi
 export AWS_REGION="$REGION" AWS_DEFAULT_REGION="$REGION"
 OVERRIDES+=("s:region=$REGION")
+
+# 변수의 지금 값: 이번에 옵션으로 준 값, 없으면 저장된 값, 둘 다 없으면 빈 문자열.
+effective() {
+    local item value
+    value=$(saved "$1")
+    for item in ${OVERRIDES[@]+"${OVERRIDES[@]}"}; do
+        case "$item" in
+            ?:"$1"=*) value="${item#*=}" ;;
+        esac
+    done
+    printf '%s' "$value"
+}
 
 # -------------------------------------------------------
 # Terraform 준비. 상태에 리소스가 있으면 이미 배포한 것입니다.
@@ -172,6 +188,60 @@ fi
 STATE_LIST=$(terraform -chdir="$TF_DIR" state list 2>/dev/null || true)
 DEPLOYED=false
 [ -z "$STATE_LIST" ] || DEPLOYED=true
+
+# -------------------------------------------------------
+# 전용 서버: VPC와 인스턴스 타입
+# -------------------------------------------------------
+if [ "$MODE" = dedicated ]; then
+    # 이미 배포했으면 저장된 값을 그대로 씁니다. VPC가 바뀌면 ALB와 EC2(EBS의 작업 내용 포함)를 모두 새로 만들게 됩니다.
+    if ! "$DEPLOYED"; then
+        VPC_ID_NOW=$(effective vpc_id)
+        VPC_INSPECTED=false
+        if "$INTERACTIVE" && [ -z "$VPC_ID_NOW" ]; then
+            VPC_NAME_NOW=$(effective vpc_name)
+            guide_vpc "$REGION" "${VPC_NAME_NOW:-orca-vpc}" "10.253.0.0/16, 퍼블릭과 프라이빗 서브넷 둘씩, NAT Gateway 하나"
+            if [ -n "$GUIDE_VPC_ID" ]; then
+                VPC_ID_NOW="$GUIDE_VPC_ID"
+                VPC_INSPECTED=true
+                OVERRIDES+=("s:vpc_id=$VPC_ID_NOW")
+            else
+                OVERRIDES+=("s:vpc_name=$GUIDE_VPC_NAME")
+            fi
+        fi
+        if [ -n "$VPC_ID_NOW" ]; then
+            # 서브넷을 주지 않았으면 VPC에서 찾습니다. ALB에는 가용 영역마다 퍼블릭 서브넷 하나, EC2에는 프라이빗 서브넷 하나.
+            if [ -z "$(effective alb_subnet_ids)" ] || [ -z "$(effective instance_subnet_id)" ]; then
+                if ! "$VPC_INSPECTED"; then
+                    guide_inspect_vpc "$REGION" "$VPC_ID_NOW" || die "VPC $VPC_ID_NOW ($REGION)를 읽지 못했습니다."
+                    "$GUIDE_VPC_OK" || die "VPC $VPC_ID_NOW 는 이 배포에 쓸 수 없습니다 (위 안내 참고). 쓸 서브넷을 --alb-subnets 와 --instance-subnet 으로 직접 줄 수도 있습니다."
+                fi
+                if [ -z "$(effective alb_subnet_ids)" ]; then
+                    OVERRIDES+=("l:alb_subnet_ids=$GUIDE_PUBLIC_SUBNETS")
+                    info "ALB 서브넷: $GUIDE_PUBLIC_SUBNETS"
+                fi
+                if [ -z "$(effective instance_subnet_id)" ]; then
+                    if "$INTERACTIVE"; then
+                        guide_instance_subnet
+                    else
+                        GUIDE_INSTANCE_SUBNET="${GUIDE_PRIVATE_SUBNETS%%,*}"
+                    fi
+                    OVERRIDES+=("s:instance_subnet_id=$GUIDE_INSTANCE_SUBNET")
+                    info "EC2 서브넷: $GUIDE_INSTANCE_SUBNET"
+                fi
+            fi
+            if [ -z "$(effective create_ssm_endpoints)" ]; then
+                guide_ssm_endpoints "$REGION" "$VPC_ID_NOW"
+                if "$GUIDE_SKIP_ENDPOINTS"; then
+                    OVERRIDES+=("b:create_ssm_endpoints=false")
+                fi
+            fi
+        fi
+    fi
+    if "$INTERACTIVE" && [ -z "$(effective instance_type)" ]; then
+        guide_instance_type "$REGION" r6g.xlarge true
+        OVERRIDES+=("s:instance_type=$GUIDE_INSTANCE_TYPE")
+    fi
+fi
 
 # -------------------------------------------------------
 # 기존 서버에 추가: 호스트의 EC2와 ALB 리스너를 찾고 미리 확인합니다
@@ -251,15 +321,9 @@ fi
 if [ "$MODE" = attach ]; then
     [ "$HOST_ARCH" = arm64 ] && RPM_ARCH=aarch64 || RPM_ARCH=x86_64
 else
-    INSTANCE_TYPE=$(saved instance_type)
-    for item in ${OVERRIDES[@]+"${OVERRIDES[@]}"}; do
-        case "$item" in s:instance_type=*) INSTANCE_TYPE="${item#*=}" ;; esac
-    done
+    INSTANCE_TYPE=$(effective instance_type)
     INSTANCE_TYPE="${INSTANCE_TYPE:-r6g.xlarge}"
-    case "$INSTANCE_TYPE" in
-        *g.*|*gd.*|*gn.*) RPM_ARCH=aarch64 ;;
-        *) RPM_ARCH=x86_64 ;;
-    esac
+    RPM_ARCH=$(guide_instance_arch "$REGION" "$INSTANCE_TYPE")
 fi
 if [ -z "$ORCA_VERSION" ] && [ -z "$SAVED_VERSION" ]; then
     ORCA_VERSION=$(curl -fsSL https://api.github.com/repos/stablyai/orca/releases/latest \

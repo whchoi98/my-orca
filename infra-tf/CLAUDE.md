@@ -26,7 +26,7 @@
 | `dedicated/tests/mocks/aws.tfmock.hcl`, `attach/tests/mocks/aws.tfmock.hcl` | 가짜 AWS provider가 돌려주는 값 |
 | `attach/tests/attach.tftest.hcl` | 기존 서버 추가 시험. 계획만 계산 |
 | `test/ssm_run_test.py` | `scripts/ssm_run.sh` 시험(가짜 aws) |
-| `test/deploy_script_test.py` | 루트의 `deploy_orca_tf.sh` 시험(가짜 aws, terraform, curl). 사전 점검, 입력 값의 저장과 이어받기, 접속 암호 전달 |
+| `test/deploy_script_test.py` | 루트의 `deploy_orca_tf.sh` 시험(가짜 aws, terraform, curl). 사전 점검, 입력 값의 저장과 이어받기, 접속 암호 전달, 대화형 안내(`deploy_guide.sh`)와 기존 VPC의 서브넷 자동 선택 |
 | `test/ops_scripts_test.py` | 루트의 `get_pairing_url.sh`, `set_password.sh`, `cleanup.sh`의 `--tf` 옵션 시험(가짜 terraform, aws) |
 | `dedicated/.terraform.lock.hcl`, `attach/.terraform.lock.hcl` | provider 버전과 해시(네 플랫폼). 두 파일은 같은 내용 |
 
@@ -39,6 +39,8 @@
 - 한 서버에는 CDK 스택과 Terraform 배포 가운데 하나만 붙입니다. 둘 다 붙이면 설치 스크립트가 서로의 페어링 주소를 덮어씁니다
 - 상태 파일에는 `X-Custom-Secret` 값이 평문으로 들어 있습니다. 읽지 않고, `terraform show`와 `terraform state pull`처럼 상태를 그대로 출력하는 명령을 쓰지 않습니다. 값이 필요하면 `terraform output`을 씁니다(비밀 값은 출력으로 만들지 않았습니다)
 - 페어링 링크와 설정 코드를 출력(output)이나 리소스 속성으로 만들지 않습니다. 상태 파일에 남기 때문입니다
+- 시험 파일(`*.tftest.hcl`)은 머리의 `variables` 블록에서 구성의 모든 변수를 정합니다. `terraform test`는 구성 디렉터리의 `orca.auto.tfvars.json`도 읽으므로, 빠진 변수가 있으면 배포가 있는 디렉터리에서 시험 결과가 달라집니다(`bash tests/run-all.sh structure`가 검사). 변수를 더하면 시험 파일에도 더합니다
+- 전용 서버의 인스턴스는 AMI, UserData, 태그의 변경을 반영하지 않습니다(`ignore_changes`). AMI가 바뀌면 볼륨째 교체되고, 계정의 자동화가 붙인 태그를 지우면 다음 적용마다 서로 되돌리게 됩니다
 - `attach/tests/`의 시험은 `command = plan`만 씁니다. apply를 하면 `local-exec`가 실제 AWS에 설치 명령을 보냅니다
 - `terraform_data.host_install`에는 destroy 프로비저너를 두지 않고, `terraform_data.host_uninstall`의 `triggers_replace`에는 인스턴스 ID만 둡니다. 어기면 버전을 올릴 때 Orca를 먼저 제거하게 됩니다
 - `dedicated/user_data.sh.tftpl`은 `infra-cdk/lib/orca-stack.ts`의 UserData와 같은 내용이어야 합니다. 셸의 `${VAR}`는 `$${VAR}`로, rpm의 `%{...}`는 `%%{...}`로 적습니다. 이미 만든 인스턴스에는 반영되지 않습니다(`ignore_changes`)

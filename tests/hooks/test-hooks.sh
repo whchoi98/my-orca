@@ -104,6 +104,14 @@ for HK_NAME in infra-tf/dedicated/tests/variants.tftest.hcl infra-tf/attach/test
     assert_not_contains "check-doc-sync: $HK_NAME 은 배포 승인을 알리지 않음" "$HK_OUT" "승인"
 done
 
+# 두 배포 스크립트가 함께 쓰는 안내: 양쪽 시험과 맞춰야 할 두 곳(스택의 타입 목록, CDK의 서브넷 분류)을 알린다
+HK_OUT=$(bash .claude/hooks/check-doc-sync.sh "deploy_guide.sh" 2>&1 || true)
+assert_contains "check-doc-sync: 안내 코드는 CDK 쪽 시험을 알림" "$HK_OUT" "infra-cdk/test/deploy_test.py"
+assert_contains "check-doc-sync: 안내 코드는 Terraform 쪽 시험을 알림" "$HK_OUT" "bash infra-tf/run-tests.sh"
+assert_contains "check-doc-sync: 안내 코드는 스택의 타입 목록을 알림" "$HK_OUT" "infra-cdk/lib/orca-stack.ts"
+assert_contains "check-doc-sync: 안내 코드는 CDK의 서브넷 분류를 알림" "$HK_OUT" "Vpc.fromLookup"
+assert_contains "check-doc-sync: 안내 코드는 README의 두 구역을 알림" "$HK_OUT" "영어와 한국어 두 구역"
+
 for HK_NAME in deploy_orca.sh deploy_orca_tf.sh upgrade_orca.sh cleanup.sh set_password.sh get_pairing_url.sh; do
     HK_OUT=$(bash .claude/hooks/check-doc-sync.sh "$HK_NAME" 2>&1 || true)
     assert_contains "check-doc-sync: $HK_NAME 은 README의 두 구역을 알림" "$HK_OUT" "영어와 한국어 두 구역"

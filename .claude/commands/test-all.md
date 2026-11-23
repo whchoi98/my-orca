@@ -1,5 +1,5 @@
 ---
-description: 이 저장소의 시험(코드 시험 다섯 묶음, Terraform 시험, 하네스, 형식 검사)을 모두 실행하고 결과를 보고합니다
+description: 이 저장소의 시험(코드 시험 여섯 묶음, Terraform 시험, 하네스, 형식 검사)을 모두 실행하고 결과를 보고합니다
 allowed-tools: Read, Glob, Bash(bash tests/run-all.sh:*), Bash(npm test --prefix infra-cdk:*), Bash(bash infra-tf/run-tests.sh:*)
 ---
 
@@ -18,7 +18,7 @@ allowed-tools: Read, Glob, Bash(bash tests/run-all.sh:*), Bash(npm test --prefix
 하나가 실패해도 나머지를 계속 실행해 전체 결과를 보고합니다.
 
 ```bash
-# 코드 시험 (게이트 함수, 설정 서비스, 페어링, 호스트 설치, 업그레이드 스크립트)
+# 코드 시험 (게이트 함수, 설정 서비스, 페어링, 호스트 설치, 업그레이드 스크립트, 배포 스크립트)
 npm test --prefix infra-cdk
 
 # Terraform 시험 (형식, validate, 가짜 provider의 계획 시험, ssm_run.sh). 처음에는 provider를 내려받음

@@ -7,9 +7,21 @@ mock_provider "aws" {
   source = "./tests/mocks"
 }
 
+# Every input is set here, so that the inputs a deployment saved next to this configuration
+# (orca.auto.tfvars.json, which terraform test also loads) cannot change what is tested.
 variables {
-  host_instance_id  = "i-0123456789abcdef0"
-  host_listener_arn = "arn:aws:elasticloadbalancing:ap-northeast-2:123456789012:listener/app/host/0123456789abcdef/0123456789abcdef"
+  region                          = "ap-northeast-2"
+  name                            = "orca-on-vscode"
+  host_instance_id                = "i-0123456789abcdef0"
+  host_listener_arn               = "arn:aws:elasticloadbalancing:ap-northeast-2:123456789012:listener/app/host/0123456789abcdef/0123456789abcdef"
+  host_instance_security_group_id = null
+  host_alb_security_group_id      = null
+  host_user                       = "ec2-user"
+  host_label                      = ""
+  orca_version                    = "1.4.269"
+  password_gate                   = true
+  gate_setup_rule_priority        = 5
+  orca_rule_priority              = 10
 }
 
 run "defaults" {

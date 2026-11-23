@@ -30,6 +30,7 @@ Terraform으로는 `bash deploy_orca_tf.sh`(전용 서버, `infra-tf/dedicated`)
 ```
 deploy_orca.sh          CDK 배포 (대화형 또는 --yes, --attach로 기존 서버에 추가)
 deploy_orca_tf.sh       Terraform 배포 (같은 옵션 체계, --plan으로 계획만 확인)
+deploy_guide.sh         두 배포 스크립트가 함께 쓰는 대화형 안내(리전, VPC, 인스턴스 타입). 직접 실행하지 않음
 upgrade_orca.sh         --attach 스택(CDK)의 Orca를 새 버전으로 올림 (deploy_orca.sh를 다시 실행)
 get_pairing_url.sh      페어링 링크 조회 (SSM Session Manager). 링크를 화면에 출력함
 set_password.sh         접속 암호 설정과 변경 (CloudFront KeyValueStore)
@@ -50,7 +51,7 @@ docs/infographic/       문서에 넣은 그림 네 개의 소스와 결과물(b
 orca/                   분석용 upstream clone. 추적하지 않음
 ```
 
-모듈마다 `CLAUDE.md`가 있습니다: `infra-cdk/`, `infra-tf/`, `scripts/`, `tests/`. 루트의 운영 스크립트 여섯 개는 이 파일이 다룹니다.
+모듈마다 `CLAUDE.md`가 있습니다: `infra-cdk/`, `infra-tf/`, `scripts/`, `tests/`. 루트의 운영 스크립트 여섯 개와 `deploy_guide.sh`는 이 파일이 다룹니다.
 
 ## Conventions
 
@@ -76,7 +77,7 @@ orca/                   분석용 upstream clone. 추적하지 않음
 # 작업 환경 준비 (도구 확인, 실행 권한, CDK 의존성). AWS와 서버를 건드리지 않음
 bash scripts/setup.sh
 
-# 코드 시험 다섯 묶음 (게이트 함수, 설정 서비스, 페어링, 호스트 설치, 업그레이드 스크립트)
+# 코드 시험 여섯 묶음 (게이트 함수, 설정 서비스, 페어링, 호스트 설치, 업그레이드 스크립트, 배포 스크립트)
 npm test --prefix infra-cdk
 
 # Terraform 시험 (형식, validate, 계획 시험, ssm_run.sh). AWS를 부르지 않음. 처음에는 provider를 내려받음
@@ -115,8 +116,11 @@ bash cleanup.sh --tf attach
 
 - `npx cdk diff`는 `OrcaVersion`을 스택의 지금 값이 아니라 템플릿의 기본값으로 계산해 보여 줍니다(2026-11-22 확인). 버전이 움직이면 안 되는 배포에는 `--orca-version <지금 버전>`을 명시합니다. 옵션을 빼면 이전 값을 유지하도록 만들어져 있지만 그 경로는 기본값과 지금 값이 다른 상태에서 확인한 적이 없습니다
 - `deploy_orca.sh`는 `--no-pairing-output`과 `--no-password-gate`를 이전 배포에서 이어받지 않습니다. 이 옵션으로 만든 스택은 다시 배포할 때마다 같은 옵션을 줍니다. `upgrade_orca.sh`는 두 옵션을 넘기지 못합니다
+- 전용 서버를 `--yes` 없이 배포하면 번호 메뉴로 리전, VPC(새로 만들기 또는 계정의 기존 VPC 목록), 인스턴스 타입을 고릅니다(`deploy_guide.sh`). 옵션으로 준 값은 묻지 않습니다. 기존 VPC는 서브넷을 CDK의 `Vpc.fromLookup`과 같은 기준으로 나눠 보여 주고, 퍼블릭 서브넷이 가용 영역 둘 이상에 있고 프라이빗 서브넷이 하나 이상 있어야 받습니다. 그 VPC에 SSM 엔드포인트가 이미 있으면 새로 만들지 않습니다
+- 이미 배포한 전용 서버 스택은 VPC와 인스턴스 타입을 지금 값으로 이어받습니다. 다른 VPC를 주면 멈춥니다(VPC가 바뀌면 ALB와 EC2를 모두 새로 만들게 됩니다)
 - `deploy_orca_tf.sh`는 입력 값을 구성 디렉터리의 `orca.auto.tfvars.json`에 저장하고 다시 실행할 때 주지 않은 옵션은 저장된 값을 유지합니다(`--no-password-gate` 포함). `upgrade_orca.sh`는 CDK 스택만 다룹니다
-- Terraform 코드는 `terraform validate`, 가짜 provider의 계획 시험, 실제 계정을 상대로 한 읽기 전용 `terraform plan`까지 확인했습니다(2026-11-22). 설치와 제거 리소스가 실행되는 시점은 같은 모양의 로컬 구성으로 확인했습니다. 실제 구성의 `terraform apply`와 `destroy`는 실행해 본 적이 없습니다
+- Terraform의 전용 서버 구성(`infra-tf/dedicated`)은 실제로 두 번 배포해 확인하고 지웠습니다(2026-11-23, 새 VPC와 기존 VPC). 기존 서버에 추가하는 구성(`infra-tf/attach`)은 적용해 본 적이 없습니다. 읽기 전용 `terraform plan`, 가짜 provider의 계획 시험, 같은 모양의 로컬 구성으로 본 설치와 제거의 실행 시점까지만 확인했습니다
+- 배포가 있는 구성 디렉터리에는 저장된 입력 값(`orca.auto.tfvars.json`)과 상태 파일이 있습니다. 그 디렉터리에서 `terraform test`를 실행해도 되도록 시험 파일은 모든 변수를 스스로 정합니다
 - 새 Orca 버전으로 올리기 전에 RPM의 의존성, `serve` 옵션, 로그 문구가 그대로인지 확인합니다. 순서는 `docs/runbooks/upgrade-orca.md`에 있습니다
 - `/deploy`, `/test-all`, `/review` 명령과 `project-review`, `sync-docs`, `refactor`, `release` 스킬이 위 절차를 담고 있습니다
 

@@ -78,7 +78,7 @@ assert_eq "scripts/CLAUDE.md: 스크립트를 모두 적음" "" "$(st_unnamed sc
 mapfile -t ST_FILES < <(find tests -type f -not -name CLAUDE.md | sort)
 assert_eq "tests/CLAUDE.md: 시험 파일을 모두 적음" "" "$(st_unnamed tests/CLAUDE.md "${ST_FILES[@]}")"
 mapfile -t ST_FILES < <(find . -maxdepth 1 -type f -name '*.sh' | sed 's#^\./##' | sort)
-[ "${#ST_FILES[@]}" -ge 6 ] && pass "루트: 운영 스크립트를 찾음 (${#ST_FILES[@]}개)" || fail "루트: 운영 스크립트를 찾음" "${#ST_FILES[@]}개"
+[ "${#ST_FILES[@]}" -ge 7 ] && pass "루트: 운영 스크립트를 찾음 (${#ST_FILES[@]}개)" || fail "루트: 운영 스크립트를 찾음" "${#ST_FILES[@]}개"
 assert_eq "CLAUDE.md: 루트의 운영 스크립트를 모두 적음" "" "$(st_unnamed CLAUDE.md "${ST_FILES[@]}")"
 
 # --- 자산 디렉터리에 문서가 섞이지 않는지 ---
@@ -100,6 +100,16 @@ ST_V4=$(st_tf_default infra-tf/attach/variables.tf)
 [ -n "$ST_V3" ] && pass "infra-tf/dedicated: 기본 orca_version을 읽음 ($ST_V3)" || fail "infra-tf/dedicated: 기본 orca_version을 읽음" "값 없음"
 assert_eq "Terraform 전용 서버의 기본 orca_version이 CDK와 같음" "$ST_V1" "$ST_V3"
 assert_eq "Terraform 기존 서버 추가의 기본 orca_version이 CDK와 같음" "$ST_V1" "$ST_V4"
+# 대화형 안내가 보여 주는 인스턴스 타입은 전용 서버 스택이 받는 목록과 같아야 한다. 다르면 메뉴에서 고른 타입을
+# CloudFormation이 거절하거나, 스택이 받는 타입을 메뉴에서 고를 수 없다.
+ST_T1=$(sed -n '/^GUIDE_INSTANCE_TYPES=(/,/^)/p' deploy_guide.sh | grep -oE '"[a-z0-9]+\.[a-z0-9]+:' | tr -d '":' | sort | tr '\n' ' ')
+ST_T2=$(sed -n '/const arm64InstanceTypes = \[/,/const instanceType = new/p' infra-cdk/lib/orca-stack.ts | grep -oE "'[a-z0-9]+\.[a-z0-9]+'" | tr -d "'" | sort | tr '\n' ' ')
+[ "$(wc -w <<<"$ST_T1")" -ge 10 ] && pass "deploy_guide.sh: 인스턴스 타입 목록을 읽음 ($(wc -w <<<"$ST_T1" | tr -d ' ')개)" || fail "deploy_guide.sh: 인스턴스 타입 목록을 읽음" "$ST_T1"
+assert_eq "안내의 인스턴스 타입 목록이 전용 서버 스택의 목록과 같음" "$ST_T2" "$ST_T1"
+# 두 배포 스크립트가 같은 안내를 불러 쓴다
+for ST_FILE in deploy_orca.sh deploy_orca_tf.sh; do
+    grep -qxF 'source "$SCRIPT_DIR/deploy_guide.sh"' "$ST_FILE" && pass "$ST_FILE: 대화형 안내를 불러 씀" || fail "$ST_FILE: 대화형 안내를 불러 씀" "source 줄 없음"
+done
 # 서버에 설치하는 실행 의존 패키지 목록은 두 곳에 있다(기존 서버용 스크립트, 전용 서버의 UserData)
 ST_P1=$(sed -n '/^dnf install -y -q gtk3/,/[^\\]$/p' infra-cdk/lib/host/install_orca.sh | tr -d '\\' | tr -s ' \n' '\n' \
     | grep -vE '^(dnf|install|-y|-q|)$' | sort | tr '\n' ' ')
@@ -182,6 +192,31 @@ assert_contains "infra-tf/attach: 제거 리소스에 destroy 프로비저너가
 assert_contains "infra-tf/attach: 제거 리소스가 uninstall_orca.sh를 보냄" "$ST_TF_UNINSTALL" "/uninstall_orca.sh"
 assert_not_contains "infra-tf/attach: 제거 리소스가 설치 스크립트를 보내지 않음" "$ST_TF_UNINSTALL" "/install_orca.sh"
 assert_contains "infra-tf/attach: 제거 리소스는 인스턴스가 바뀔 때만 교체됨" "$ST_TF_UNINSTALL" "triggers_replace = [var.host_instance_id]"
+# terraform test는 구성 디렉터리의 *.auto.tfvars.json도 읽는다. 배포한 뒤에는 deploy_orca_tf.sh가 저장한 입력 값이
+# 거기 있으므로, 시험 파일이 모든 변수를 스스로 정하지 않으면 배포가 있는 디렉터리에서 시험 결과가 달라진다
+# (2026-11-23 실제 배포 중에 확인). 모듈을 직접 부르는 modules.tftest.hcl은 실행마다 변수를 준다.
+for ST_ROOT_TF in dedicated attach; do
+    ST_VARS=$(sed -n 's/^variable "\([a-z_]*\)" {$/\1/p' "infra-tf/$ST_ROOT_TF/variables.tf")
+    [ "$(wc -w <<<"$ST_VARS")" -ge 8 ] && pass "infra-tf/$ST_ROOT_TF: 변수 목록을 읽음 ($(wc -w <<<"$ST_VARS" | tr -d ' ')개)" || fail "infra-tf/$ST_ROOT_TF: 변수 목록을 읽음" "$ST_VARS"
+    for ST_FILE in "infra-tf/$ST_ROOT_TF"/tests/*.tftest.hcl; do
+        [ "$(basename "$ST_FILE")" = modules.tftest.hcl ] && continue
+        ST_BLOCK=$(sed -n '/^variables {$/,/^}$/p' "$ST_FILE")
+        ST_MISSING=""
+        for ST_NAME in $ST_VARS; do
+            grep -qE "^  $ST_NAME +=" <<<"$ST_BLOCK" || ST_MISSING="$ST_MISSING $ST_NAME"
+        done
+        assert_eq "$ST_FILE: 모든 변수를 시험 파일에서 정함" "" "$ST_MISSING"
+    done
+done
+# 전용 서버의 인스턴스는 AMI, UserData, 태그의 변경을 반영하지 않는다. AMI가 바뀌면 볼륨째 교체되고,
+# 계정의 자동화가 붙인 태그를 다음 적용이 지우면 서로 붙였다 떼기를 되풀이한다(2026-11-23 실제 배포에서 확인).
+ST_IGNORED=$(sed -n '/^resource "aws_instance" "orca" {/,/^}/p' infra-tf/dedicated/main.tf | sed -n 's/^ *ignore_changes = \[\(.*\)\]$/\1/p')
+for ST_ATTR in ami user_data tags tags_all; do
+    case ", $ST_IGNORED," in
+        *", $ST_ATTR,"*) pass "infra-tf/dedicated: 인스턴스의 $ST_ATTR 변경을 반영하지 않음" ;;
+        *) fail "infra-tf/dedicated: 인스턴스의 $ST_ATTR 변경을 반영하지 않음" "ignore_changes: $ST_IGNORED" ;;
+    esac
+done
 # 페어링 링크와 설정 코드는 Terraform 출력으로 만들지 않는다. 상태 파일에 평문으로 남기 때문이다
 assert_eq "infra-tf: 페어링 링크나 설정 코드를 출력으로 만들지 않음" "0" \
     "$(cat infra-tf/dedicated/outputs.tf infra-tf/attach/outputs.tf infra-tf/modules/*/outputs.tf | grep -ciE '^output "[a-z_]*(pairing_(web_)?link|pairing_code|pairing_url|setup_code)"' || true)"

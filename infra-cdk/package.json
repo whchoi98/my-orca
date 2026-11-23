@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "test": "node test/password-gate.test.mjs && python3 -I test/setup_service_test.py && python3 -I test/pairing_test.py && python3 -I test/host_install_test.py && python3 -I test/upgrade_test.py",
+    "test": "node test/password-gate.test.mjs && python3 -I test/setup_service_test.py && python3 -I test/pairing_test.py && python3 -I test/host_install_test.py && python3 -I test/upgrade_test.py && python3 -I test/deploy_test.py",
     "cdk": "cdk",
     "synth": "cdk synth",
     "deploy": "cdk deploy --all",
