@@ -204,7 +204,7 @@ Resource names start with the variable `name` (default `orca-server`, or `orca-o
 - Checked on 2026-11-22: one attach stack, OrcaOnVscodeStack, in ap-northeast-2 on the host stack VscodeServerStack, with `OrcaVersion` 1.4.269 and both target groups healthy.
 - Resource count of that stack (checked on 2026-11-21): 1 distribution, 1 function, 1 KeyValueStore, 1 secret, 2 target groups, 2 listener rules, 2 security group ingress rules, 10 Lambda functions, 2 state machines, 2 log groups, 2 custom resources.
 - Checked on 2026-11-21: no dedicated stack (OrcaServerStack) exists in ap-northeast-2.
-- No Terraform deployment exists. On 2026-11-22 only read-only plans were run.
+- No Terraform deployment exists. On 2026-11-23 the dedicated server was deployed twice with Terraform for verification (a new VPC and an existing VPC) and destroyed, and the same was done with CDK under test stack names. The configuration for an existing server was only planned, read-only.
 
 ## Key Design Decisions
 
@@ -436,7 +436,7 @@ flowchart LR
 - 2026-11-22에 확인: 추가 스택 하나(OrcaOnVscodeStack)가 ap-northeast-2에서 호스트 스택 VscodeServerStack 위에 있고 `OrcaVersion`은 1.4.269이며 대상 그룹 둘이 모두 healthy입니다.
 - 그 스택의 리소스 수(2026-11-21에 확인): 배포 1, 함수 1, KeyValueStore 1, 비밀값 1, 대상 그룹 2, 리스너 규칙 2, 보안 그룹 인바운드 규칙 2, Lambda 함수 10, 상태 머신 2, 로그 그룹 2, 커스텀 리소스 2.
 - 2026-11-21에 확인: ap-northeast-2에 전용 서버 스택(OrcaServerStack)은 없습니다.
-- Terraform으로 배포한 것은 없습니다. 2026-11-22에는 읽기 전용 계획만 실행했습니다.
+- Terraform으로 배포한 것은 없습니다. 2026-11-23에 확인을 위해 전용 서버를 Terraform으로 두 번(새 VPC와 기존 VPC) 배포했다가 지웠고, CDK로도 시험용 스택 이름으로 같은 확인을 했습니다. 기존 서버에 추가하는 구성은 읽기 전용 계획만 실행했습니다.
 
 ## 주요 설계 결정
 
