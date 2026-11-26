@@ -67,13 +67,29 @@ There are two deployment modes, and each one deploys with AWS CDK or with Terraf
 
 ### Guided Install in Claude Code
 
-Open the repository in Claude Code and run the `install-orca` skill. It checks the local tools and the AWS account, then asks for the deployment mode, the tool, the region, the VPC and the instance type. It shows what will be created and billed and deploys after you approve. The access password is set on the first page after the deployment, so it never passes through the session.
+The `install-orca` skill walks through the first install in a Claude Code session. It needs Claude Code, the tools under [Prerequisites](#prerequisites) and the AWS credentials of the target account in the shell. Start Claude Code in the repository and type `/install-orca`. A choice that follows the command is not asked again.
 
 ```bash
 git clone https://github.com/whchoi98/my-orca.git
 cd my-orca
-claude                  # then type /install-orca
+claude
 ```
+
+```text
+/install-orca                               # Ask for every choice
+/install-orca terraform us-west-2           # Deploy with Terraform in us-west-2
+/install-orca --attach VscodeServerStack    # Add Orca to an existing VS Code server
+```
+
+| Step | What the skill does | What you do |
+|---|---|---|
+| 1. Check | Runs `scripts/setup.sh`, shows the AWS account and looks for an existing deployment | Confirm the account |
+| 2. Choose | Shows the defaults: dedicated server, AWS CDK, a new VPC, r6g.xlarge, the region from `AWS_REGION` or ap-northeast-2 | Accept them or say what to change |
+| 3. Plan | Shows the command it will run and the billed resources. With Terraform it runs the plan first | Approve the plan |
+| 4. Deploy and verify | Deploys with the pairing link masked, then reads the stack status and checks the password gate | Approve each deployment command when Claude Code asks |
+| 5. First access | Explains how to get the pairing link | Run `bash get_pairing_url.sh` in your own terminal, open the link and set the password |
+
+The skill does not ask for the access password and does not print the pairing link. You set the password on the first page and read the link in your own terminal. Changes to a deployed stack and upgrades go through `/deploy`.
 
 ### Manual Install
 
@@ -118,11 +134,9 @@ The access password is never stored in a file. Enter it at a prompt or on the fi
 |---|---|---|
 | `ORCA_WEB_PASSWORD` | Access password for the deployment scripts, passed once in front of the command. Do not write it to `.env` or any other file | (none: prompt, or setup at first login) |
 | `AWS_REGION` | Region used by every script. `--region` overrides it | ap-northeast-2 |
-| `AWS_DEFAULT_REGION` | Region used when `AWS_REGION` is not set | ap-northeast-2 |
 | `STACK_NAME` | Stack name used by every script. `--stack-name` overrides it | `OrcaServerStack` (`OrcaOnVscodeStack` with `--attach`) |
-| `CLAUDE_NOTIFY_WEBHOOK` | Webhook URL for Claude Code notifications (optional) | (empty: no notification) |
 
-Stack parameters, CDK context, outputs and the IAM role are in the [configuration reference](docs/configuration.md). Terraform options and variables are in [Deploy with Terraform](docs/terraform.md#options-and-variables).
+The other variables, stack parameters, CDK context, outputs and the IAM role are in the [configuration reference](docs/configuration.md). Terraform options and variables are in [Deploy with Terraform](docs/terraform.md#options-and-variables).
 
 ## Project Structure
 
@@ -247,13 +261,29 @@ This project does not include a LICENSE file. No license has been chosen.
 
 ### Claude Code에서 안내받는 설치
 
-Claude Code에서 이 저장소를 열고 `install-orca` 스킬을 실행합니다. 스킬은 로컬 도구와 AWS 계정을 확인한 다음 배포 방식, 배포 도구, 리전, VPC, 인스턴스 타입을 묻습니다. 만들 리소스와 과금되는 리소스를 보여 주고 승인을 받은 뒤 배포합니다. 접속 암호는 배포 뒤 첫 화면에서 정하므로 세션을 지나가지 않습니다.
+`install-orca` 스킬이 Claude Code 세션에서 처음 설치를 차례로 안내합니다. Claude Code와 [사전 요구 사항](#사전-요구-사항)의 도구가 있어야 하고 셸에 대상 계정의 AWS 자격 증명이 설정되어 있어야 합니다. 저장소에서 Claude Code를 실행하고 `/install-orca`를 입력합니다. 명령 뒤에 선택을 붙이면 그 항목은 묻지 않습니다.
 
 ```bash
 git clone https://github.com/whchoi98/my-orca.git
 cd my-orca
-claude                  # 실행한 뒤 /install-orca 입력
+claude
 ```
+
+```text
+/install-orca                               # 모든 선택을 물어봄
+/install-orca terraform us-west-2           # Terraform으로 us-west-2에 배포
+/install-orca --attach VscodeServerStack    # 기존 VS Code 서버에 Orca 추가
+```
+
+| 단계 | 스킬이 하는 일 | 사용자가 하는 일 |
+|---|---|---|
+| 1. 준비 확인 | `scripts/setup.sh`를 실행하고 AWS 계정을 보여 주며 이미 배포한 것이 있는지 확인 | 계정이 맞는지 확인 |
+| 2. 선택 | 기본값을 보여 줌: 전용 서버, AWS CDK, 새 VPC, r6g.xlarge, 리전은 `AWS_REGION` 또는 ap-northeast-2 | 그대로 진행하거나 바꿀 항목을 말함 |
+| 3. 계획 | 실행할 명령과 과금되는 리소스를 보여 줌. Terraform은 계획을 먼저 실행 | 계획을 승인 |
+| 4. 배포와 확인 | 페어링 링크를 가린 채 배포한 뒤 스택 상태와 암호 게이트의 응답을 확인 | Claude Code가 배포 명령의 승인을 물을 때마다 승인 |
+| 5. 첫 접속 | 페어링 링크를 받는 방법을 안내 | 자기 터미널에서 `bash get_pairing_url.sh`를 실행하고 링크를 열어 암호를 정함 |
+
+스킬은 접속 암호를 묻지 않고 페어링 링크를 출력하지 않습니다. 암호는 첫 화면에서 정하고 링크는 자기 터미널에서 받습니다. 이미 배포한 스택의 변경과 업그레이드는 `/deploy`로 합니다.
 
 ### 직접 설치
 
@@ -298,11 +328,9 @@ Terraform 배포는 `get_pairing_url.sh`, `set_password.sh`, `cleanup.sh`에 `--
 |---|---|---|
 | `ORCA_WEB_PASSWORD` | 배포 스크립트가 읽는 접속 암호. 명령 앞에 한 번만 붙여 넘깁니다. `.env`나 다른 파일에 적지 않습니다 | (없음: 프롬프트 또는 최초 로그인 때 설정) |
 | `AWS_REGION` | 모든 스크립트가 쓰는 리전. `--region`이 우선합니다 | ap-northeast-2 |
-| `AWS_DEFAULT_REGION` | `AWS_REGION`이 없을 때 쓰는 리전 | ap-northeast-2 |
 | `STACK_NAME` | 모든 스크립트가 쓰는 스택 이름. `--stack-name`이 우선합니다 | `OrcaServerStack` (`--attach`에서는 `OrcaOnVscodeStack`) |
-| `CLAUDE_NOTIFY_WEBHOOK` | Claude Code 알림을 보낼 웹훅 주소 (선택) | (비어 있음: 알림을 보내지 않음) |
 
-스택 파라미터, CDK context, 출력, IAM 역할은 [환경 설정 참조](docs/configuration.md#korean)에, Terraform 옵션과 변수는 [Terraform으로 배포](docs/terraform.md#옵션과-변수)에 있습니다.
+나머지 변수, 스택 파라미터, CDK context, 출력, IAM 역할은 [환경 설정 참조](docs/configuration.md#korean)에, Terraform 옵션과 변수는 [Terraform으로 배포](docs/terraform.md#옵션과-변수)에 있습니다.
 
 ## 프로젝트 구조
 

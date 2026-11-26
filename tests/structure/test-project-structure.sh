@@ -334,6 +334,23 @@ assert_eq "스킬 install-orca: 배포 명령에 --yes 또는 --plan" "0" \
 assert_not_contains "스킬 install-orca: 접속 암호를 명령에 넣지 않음" "$ST_BODY" "ORCA_WEB_PASSWORD="
 # 사용자가 직접 실행할 명령(페어링 링크 조회)을 스킬이 실행하라고 적지 않는다
 assert_contains "스킬 install-orca: 페어링 링크 조회는 사용자가 실행" "$ST_BODY" '`get_pairing_url.sh`는 실행하지 않습니다'
+# README가 스킬의 사용 방법을 안내한다. 명령 뒤에 붙인 값은 스킬의 $ARGUMENTS 자리에 들어간다
+assert_contains "스킬 install-orca: 명령 뒤에 붙인 값을 받음" "$ST_BODY" '$ARGUMENTS'
+for ST_LANG in english korean; do
+    # 설치 방법에서 스킬을 다루는 부분만 본다(사전 요구 사항에도 /install-orca가 나온다)
+    ST_PART=$(st_section README.md "$ST_LANG" \
+        | sed -n -E '/^### (Guided Install in Claude Code|Claude Code에서 안내받는 설치)$/,/^### (Manual Install|직접 설치)$/p')
+    assert_contains "README($ST_LANG): 설치 스킬을 실행하는 방법" "$ST_PART" '`/install-orca`'
+    assert_contains "README($ST_LANG): 설치 스킬에 값을 붙이는 예" "$ST_PART" '/install-orca --attach '
+    assert_eq "README($ST_LANG): 설치 스킬의 단계 표는 다섯 줄" "5" "$(printf '%s\n' "$ST_PART" | st_count '^\| [1-5]\. ')"
+done
+# README의 단계 표는 스킬의 단계와 맞아야 한다. 스킬의 단계를 바꾸면 README의 표도 바꾼다
+assert_eq "README: 설치 스킬 단계 표의 이름" "준비 확인|선택|계획|배포와 확인|첫 접속|" \
+    "$(st_section README.md korean | sed -n -E 's/^\| [1-5]\. ([^|]*) \|.*/\1/p' | tr '\n' '|')"
+for ST_HEAD in "준비 확인" "선택" "계획과 승인" "배포" "확인" "첫 접속 안내"; do
+    grep -qxE "## [0-9]단계: ${ST_HEAD}" "$ST_INSTALL" && pass "스킬 install-orca: '$ST_HEAD' 단계가 있음" \
+        || fail "스킬 install-orca: '$ST_HEAD' 단계가 있음" "README의 단계 표가 가리키는 단계가 스킬에 없음"
+done
 
 # --- 문서가 있는지 ---
 for ST_FILE in docs/architecture.md docs/onboarding.md docs/api-reference.md docs/decisions/.template.md \

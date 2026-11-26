@@ -9,7 +9,7 @@
 
 # English
 
-This guide covers what a deployment creates and how it is protected, the dedicated server, adding Orca to an existing server, and deleting a deployment. The commands are the AWS CDK ones (`deploy_orca.sh`). The Terraform path is in [terraform.md](terraform.md), and what to do after a deployment is in [usage.md](usage.md). In a Claude Code session the `install-orca` skill walks through the same choices and deploys after approval.
+This guide covers what a deployment creates and how it is protected, the dedicated server, adding Orca to an existing server, and deleting a deployment. The commands are the AWS CDK ones (`deploy_orca.sh`). The Terraform path is in [terraform.md](terraform.md), and what to do after a deployment is in [usage.md](usage.md). In a Claude Code session the `install-orca` skill walks through the same choices and deploys after approval. How to use it is in the [README](../README.md#guided-install-in-claude-code).
 
 ## What the Deployment Creates
 
@@ -163,7 +163,7 @@ The stack contains a CloudFront distribution, so deletion can take 10 to 15 minu
 
 # 한국어
 
-배포가 만드는 것과 보호 방법, 전용 서버 배포, 기존 서버에 Orca를 추가하는 방법, 배포 삭제를 다룹니다. 명령은 AWS CDK의 것(`deploy_orca.sh`)입니다. Terraform으로 배포하는 방법은 [terraform.md](terraform.md#korean)에, 배포한 뒤에 할 일은 [usage.md](usage.md#korean)에 있습니다. Claude Code 세션에서는 `install-orca` 스킬이 같은 선택을 차례로 묻고 승인을 받은 뒤 배포합니다.
+배포가 만드는 것과 보호 방법, 전용 서버 배포, 기존 서버에 Orca를 추가하는 방법, 배포 삭제를 다룹니다. 명령은 AWS CDK의 것(`deploy_orca.sh`)입니다. Terraform으로 배포하는 방법은 [terraform.md](terraform.md#korean)에, 배포한 뒤에 할 일은 [usage.md](usage.md#korean)에 있습니다. Claude Code 세션에서는 `install-orca` 스킬이 같은 선택을 차례로 묻고 승인을 받은 뒤 배포합니다. 사용 방법은 [README](../README.md#claude-code에서-안내받는-설치)에 있습니다.
 
 ## 배포로 만들어지는 것
 

@@ -156,6 +156,7 @@ Plan 모드(`/plan`)를 나와 구현을 시작하기 전에:
 | 기존 서버 설치 코드(`infra-cdk/lib/host/`) | `docs/runbooks/upgrade-orca.md`, `docs/usage.md`의 업그레이드 설명 |
 | 페어링 출력(`infra-cdk/lib/pairing/`) | `docs/usage.md`의 스택 출력 설명, `docs/configuration.md`의 출력 표, `docs/api-reference.md` |
 | 루트의 운영 스크립트 | `README.md`의 요약, 안내 문서(`docs/deployment.md`, `docs/terraform.md`, `docs/usage.md`, `docs/configuration.md`. 영어와 한국어 두 구역), `.claude/skills/install-orca/SKILL.md`, 이 파일의 Key Commands |
+| 설치 스킬(`.claude/skills/install-orca/SKILL.md`)의 단계와 받는 값 | `README.md`의 설치 방법에 있는 사용 예와 단계 표(영어와 한국어 두 구역) |
 | `infra-cdk/package.json`의 버전 | 이 파일의 Tech Stack |
 | 그림에 적힌 값(포트, 상태 코드, 우선순위, 버전, 절차) | `docs/infographic/`의 장 모듈(`T`와 `T_EN`)과 `docs/infographic/sources.md`를 수정하고 `docs/infographic/build.sh`로 다시 만듦 |
 | 사용자에게 보이는 변경 | `CHANGELOG.md`의 `[Unreleased]`(영어와 한국어 두 구역) |
