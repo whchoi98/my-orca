@@ -21,7 +21,12 @@ done
 # Terraform은 그 경로(deploy_orca_tf.sh, infra-tf/)를 쓸 때만 필요하다.
 command -v terraform >/dev/null 2>&1 || echo "참고: terraform 이 없습니다 (Terraform으로 배포하거나 bash infra-tf/run-tests.sh 를 실행할 때만 필요)"
 
-chmod +x .claude/hooks/*.sh scripts/*.sh tests/run-all.sh tests/*/*.sh ./*.sh infra-tf/run-tests.sh infra-tf/scripts/*.sh
+chmod +x .claude/hooks/*.sh scripts/*.sh tests/run-all.sh tests/*/*.sh infra-tf/run-tests.sh infra-tf/scripts/*.sh
+# 루트의 스크립트. deploy_guide.sh는 두 배포 스크립트가 source로 불러 쓰는 파일이라 실행 권한을 주지 않는다.
+# 권한을 주면 git이 추적하는 권한과 달라져 받은 직후의 작업 트리가 변경으로 잡힌다.
+for script in ./*.sh; do
+    [ "$script" = ./deploy_guide.sh ] || chmod +x "$script"
+done
 echo "훅과 스크립트에 실행 권한을 줬습니다"
 
 # git 훅(commit-msg, pre-commit)

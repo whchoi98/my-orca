@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix the rollback of a failed upgrade on an existing server by installing the RPM with `--oldpackage`, so that the previous version can be installed again
+- Fix `scripts/setup.sh` so that it no longer gives `deploy_guide.sh` the execute permission, which made a fresh clone show a change in the working tree
 
 ---
 
@@ -82,3 +83,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - RPM을 `--oldpackage`로 설치해 이전 버전을 다시 설치할 수 있게 하여 기존 서버에서 실패한 업그레이드의 롤백 수정
+- `scripts/setup.sh`가 `deploy_guide.sh`에 실행 권한을 줘서 저장소를 받은 직후의 작업 트리가 변경으로 잡히던 문제 수정

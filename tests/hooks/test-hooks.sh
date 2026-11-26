@@ -491,6 +491,28 @@ if grep -vE '^[[:space:]]*#' scripts/setup.sh | grep -qE '\baws [a-z0-9-]+ [a-z-
 else
     pass "setup.sh: AWS를 부르거나 배포하거나 서비스를 건드리지 않음"
 fi
+# 준비 스크립트를 실행해도 작업 트리가 변경으로 잡히지 않아야 한다. 권한을 잃은 사본에서 실행해 본다.
+# deploy_guide.sh는 source로만 쓰는 파일이라 실행 권한을 받지 않는다(git도 그렇게 추적한다).
+HK_SETUP="$TEST_TMP/setup-copy"
+mkdir -p "$HK_SETUP/infra-cdk/node_modules"
+cp --parents .claude/hooks/*.sh scripts/*.sh tests/run-all.sh tests/*/*.sh ./*.sh infra-tf/run-tests.sh infra-tf/scripts/*.sh "$HK_SETUP/"
+chmod -x "$HK_SETUP"/*.sh "$HK_SETUP"/tests/run-all.sh
+HK_OUT=$(bash "$HK_SETUP/scripts/setup.sh" 2>&1)
+assert_eq "setup.sh: 사본에서 끝까지 실행됨" "0" "$?"
+assert_contains "setup.sh: 준비 완료를 알림" "$HK_OUT" "준비 완료"
+for HK_NAME in deploy_orca.sh deploy_orca_tf.sh upgrade_orca.sh get_pairing_url.sh set_password.sh cleanup.sh tests/run-all.sh; do
+    assert_file_executable "setup.sh: $HK_NAME 에 실행 권한을 줌" "$HK_SETUP/$HK_NAME"
+done
+[ -x "$HK_SETUP/deploy_guide.sh" ] && fail "setup.sh: deploy_guide.sh에는 실행 권한을 주지 않음" "실행 권한이 생김" \
+    || pass "setup.sh: deploy_guide.sh에는 실행 권한을 주지 않음"
+# setup.sh가 실행 권한을 주는 자리의 스크립트는 git도 실행 파일로 추적한다. 다르면 setup.sh를 실행한 뒤 작업 트리가 변경으로 잡힌다
+if git rev-parse --git-dir >/dev/null 2>&1; then
+    assert_eq "setup.sh가 권한을 주는 스크립트 가운데 git이 실행 파일로 추적하지 않는 것은 deploy_guide.sh뿐" "deploy_guide.sh " \
+        "$(git ls-files -s -- '.claude/hooks/*.sh' 'scripts/*.sh' tests/run-all.sh 'tests/*/*.sh' ':(glob)*.sh' infra-tf/run-tests.sh 'infra-tf/scripts/*.sh' \
+            | awk '$1 != "100755" {print $4}' | sort | tr '\n' ' ')"
+else
+    skip "setup.sh가 권한을 주는 스크립트를 git이 실행 파일로 추적함" "git 저장소가 아님"
+fi
 
 # --- AI 공동 저자 줄 제거 ---
 assert_eq "settings: 커밋 attribution 끔" "" "$(jq -r '.attribution.commit' .claude/settings.json)"
