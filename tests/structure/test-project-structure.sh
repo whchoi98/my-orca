@@ -521,7 +521,12 @@ for ST_FILE in README.md docs/architecture.md docs/runbooks/upgrade-orca.md docs
         "$(printf '%s\n' "$ST_EN_IMAGES" | grep -v -- '-en_' | head -1)" || pass "$ST_FILE: 영어 구역은 영어판 그림만 씀"
     assert_eq "$ST_FILE: 그림의 alt 글이 비어 있지 않음" "0" "$(grep -c '<img [^>]*alt=""' "$ST_FILE" || true)"
 done
-assert_eq "README: 영어 구역의 그림은 둘 (접속 경로, 첫 접속)" "2" "$(st_section README.md english | st_images | st_count '_light\.png$')"
+assert_eq "README: 영어 구역의 그림은 둘 (상세 아키텍처, 첫 접속)" "2" "$(st_section README.md english | st_images | st_count '_light\.png$')"
+# README의 첫 그림은 상세 아키텍처다. 접속 경로 그림(01)은 아키텍처 문서에 있다
+assert_eq "README: 영어 구역의 첫 그림은 상세 아키텍처" "docs/infographic/build/05-architecture-en_16x9_light.png" \
+    "$(st_section README.md english | st_images | grep '_light\.png$' | head -1)"
+assert_eq "docs/architecture.md: 영어 구역에 상세 아키텍처 그림이 있음" "1" \
+    "$(st_section docs/architecture.md english | st_images | st_count '05-architecture-en_16x9_light\.png$')"
 # 한국어로만 쓴 문서는 한국어판 그림을 쓴다
 for ST_FILE in docs/onboarding.md docs/api-reference.md; do
     ST_MISSING=""
@@ -557,7 +562,7 @@ ST_PARITY=$(python3 -I - <<'PYEOF' 2>&1 || true
 import importlib, sys
 sys.path.insert(0, "docs/infographic")
 bad = []
-for name in ("access_path", "deploy_modes", "first_access", "upgrade_flow"):
+for name in ("access_path", "deploy_modes", "first_access", "upgrade_flow", "architecture"):
     mod = importlib.import_module(name)
     ko, en = mod.T, mod.T_EN
     if set(ko) != set(en):
@@ -653,7 +658,8 @@ for ST_FILE in CLAUDE.md README.md CHANGELOG.md docs/*.md docs/reference/*.md do
                docs/decisions/.template.md infra-cdk/CLAUDE.md infra-tf/CLAUDE.md scripts/CLAUDE.md tests/CLAUDE.md \
                .claude/commands/*.md .claude/skills/*/SKILL.md .claude/agents/*.md .claude/hooks/*.sh .claude/settings.json scripts/*.sh \
                docs/infographic/sources.md docs/infographic/build.sh docs/infographic/access_path.py docs/infographic/deploy_modes.py \
-               docs/infographic/first_access.py docs/infographic/upgrade_flow.py docs/infographic/orcakit.py; do
+               docs/infographic/first_access.py docs/infographic/upgrade_flow.py docs/infographic/architecture.py \
+               docs/infographic/orcakit.py; do
     # grep -c는 입력을 끝까지 읽는다. grep -q를 파이프 뒤에 두면 파일 앞쪽의 값을 놓칠 수 있다(run-all.sh의 contains 설명)
     ST_HITS=$(sed -E 's/111122223333|123456789012//g' "$ST_FILE" \
         | grep -cE '(^|[^0-9])[0-9]{12}([^0-9]|$)|[a-z0-9]{10,}\.cloudfront\.net|\bi-[0-9a-f]{17}\b|[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+\.(com|net)' || true)

@@ -1,6 +1,6 @@
 # 인포그래픽의 근거
 
-그림에 적은 값과 동작을 어디에서 확인했는지 적습니다. 확인하지 못한 것은 그림의 각주와 아래 "확인하지 않은 것"에 적습니다. 확인일은 2026-11-22입니다.
+그림에 적은 값과 동작을 어디에서 확인했는지 적습니다. 확인하지 못한 것은 그림의 각주와 아래 "확인하지 않은 것"에 적습니다. 확인일은 2026-11-22이고 상세 아키텍처 그림(05)에 새로 적은 값은 2026-11-26에 확인했습니다.
 
 ## 코드에서 확인한 것
 
@@ -22,6 +22,15 @@
 | 기존 서버에 추가할 때 더하는 것 | 리스너 규칙 2개, 보안 그룹 규칙 2개, 역할 정책 1개 | `infra-cdk/lib/orca-attach-stack.ts`, `docs/deployment.md` |
 | 기존 서버 설치 | SSM Run Command, `rpm -Uvh --nodeps --oldpackage`, `orca-serve`만 재시작, 상태 확인 | `infra-cdk/lib/host/install_orca.sh`, `infra-cdk/lib/host/handler.py` |
 | 배포 전 점검 | 호스트 ALB의 열린 규칙, 리스너 HTTP:80, 우선순위 5와 10, SSM 온라인 | `deploy_orca.sh` |
+| 전용 서버의 네트워크 | NAT 게이트웨이 1개, 프라이빗 서브넷의 SSM 인터페이스 엔드포인트 3개(ssm, ssmmessages, ec2messages) | `infra-cdk/lib/orca-stack.ts`의 `natGateways`, `endpoints` |
+| EC2 보안 그룹 | ALB 보안 그룹의 6768과 6769만, 인스턴스는 프라이빗 서브넷 | `infra-cdk/lib/orca-stack.ts`의 `ec2Sg.addIngressRule`, `vpcSubnets` |
+| ALB 유휴 제한 시간 | 3,600초 | `infra-cdk/lib/orca-stack.ts`의 `idleTimeout` |
+| 대상 그룹 상태 확인 | 30초마다 `/web-index.html`, 200 | `infra-cdk/lib/orca-front-door.ts`의 `healthCheck` |
+| 페어링 출력 | Lambda 커스텀 리소스가 30초마다 SSM Run Command로 조회, 40분이 지나면 `unavailable` 보고 | `infra-cdk/lib/orca-front-door.ts`의 `queryInterval`, `infra-cdk/lib/pairing/handler.py`의 `GIVE_UP_SECONDS` |
+| 인스턴스 역할 | `AmazonSSMManagedInstanceCore`, `CloudWatchAgentServerPolicy`, Bedrock 호출, KeyValueStore의 `UpdateKeys` | `infra-cdk/lib/orca-stack.ts`의 `ec2Role`, `infra-cdk/lib/orca-front-door.ts`의 `PasswordGateFirstLoginSetup` |
+| 전용 서버의 설치 | UserData가 `orca-bootstrap.service`를 만들고 완료 표시 파일이 생길 때까지 부팅마다 실행. GitHub Releases의 `orca-ide` RPM, S3의 설정 서비스 묶음, Claude Code와 Codex와 Kiro CLI를 설치 | `infra-cdk/lib/orca-stack.ts`의 `setupScript`, `userData` |
+| 암호 게이트 함수 | viewer request에 연결, JavaScript runtime 2.0 | `infra-cdk/lib/orca-front-door.ts`의 `addPasswordGate` |
+| 두 방식의 차이 | 기존 서버에 추가하는 방식은 호스트의 VPC, ALB, EC2를 함께 쓰고 호스트 리스너에 규칙 2개를 더하며 SSM Run Command로 설치. 삭제하면 Orca만 제거 | `infra-cdk/lib/orca-attach-stack.ts`, `infra-cdk/lib/host/handler.py`, `infra-cdk/lib/host/uninstall_orca.sh` |
 
 ## 실행으로 확인한 것 (2026-11-22, 서울 리전의 `--attach` 스택)
 

@@ -65,7 +65,14 @@ A request passes the password gate at the edge (a CloudFront Function with a Key
 
 ## Full Architecture Diagram
 
-The Deployment and Observability layers of the diagram show the CDK deployment. In the Terraform deployment `terraform apply` takes the place of CloudFormation, `infra-tf/scripts/ssm_run.sh` takes the place of `Custom::OrcaHostInstall`, the setup bundle comes from a bucket of its own, and there is no `Custom::OrcaPairingInfo` and no pairing output.
+The figure below puts every component on one map: the access path, the password gate and the header value, the deployment and pairing link path, and what the server uses and where it calls out. It shows a dedicated server in a new VPC, and its second section lists what differs when Orca is added to an existing server.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="infographic/build/05-architecture-en_16x9_dark.png">
+  <img src="infographic/build/05-architecture-en_16x9_light.png" alt="Architecture in detail: twenty components on one map with the access path, the password gate and the header value, the deployment and pairing link path and the outbound path, the six steps from deployment to access, the differences between the two deployment modes, the values set in the code and the access limits at each boundary">
+</picture>
+
+The Deployment and Observability layers of the Mermaid diagram below show the CDK deployment. In the Terraform deployment `terraform apply` takes the place of CloudFormation, `infra-tf/scripts/ssm_run.sh` takes the place of `Custom::OrcaHostInstall`, the setup bundle comes from a bucket of its own, and there is no `Custom::OrcaPairingInfo` and no pairing output.
 
 ```mermaid
 flowchart TB
@@ -297,7 +304,14 @@ my-orca는 Orca의 headless 서버(`orca-ide serve`)를 프라이빗 서브넷�
 
 ## 전체 아키텍처 그림
 
-그림의 Deployment와 Observability 층은 CDK 배포를 그린 것입니다. Terraform 배포에서는 `terraform apply`가 CloudFormation의 자리를, `infra-tf/scripts/ssm_run.sh`가 `Custom::OrcaHostInstall`의 자리를 맡고 설정 묶음은 전용 버킷에서 오며 `Custom::OrcaPairingInfo`와 페어링 출력은 없습니다.
+아래 그림은 모든 구성 요소를 한 장에 놓은 것입니다. 접속 경로, 암호 게이트와 헤더 값, 배포와 페어링 링크 조회 경로, 서버가 쓰는 것과 밖으로 나가는 경로가 들어 있습니다. 전용 서버를 새 VPC에 배포한 구성이고 기존 서버에 추가할 때 달라지는 것은 그림의 2번 섹션에 있습니다.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="infographic/build/05-architecture_16x9_dark.png">
+  <img src="infographic/build/05-architecture_16x9_light.png" alt="상세 아키텍처: 구성 요소 스무 개를 한 장에 놓은 구조도. 접속 경로, 암호 게이트와 헤더 값, 배포와 페어링 링크 조회 경로, 밖으로 나가는 경로, 그리고 배포부터 접속까지의 여섯 단계와 두 배포 방식의 차이, 코드에 정한 값, 경계별 접근 제한">
+</picture>
+
+아래 Mermaid 그림의 Deployment와 Observability 층은 CDK 배포를 그린 것입니다. Terraform 배포에서는 `terraform apply`가 CloudFormation의 자리를, `infra-tf/scripts/ssm_run.sh`가 `Custom::OrcaHostInstall`의 자리를 맡고 설정 묶음은 전용 버킷에서 오며 `Custom::OrcaPairingInfo`와 페어링 출력은 없습니다.
 
 ```mermaid
 flowchart TB

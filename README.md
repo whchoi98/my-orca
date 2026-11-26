@@ -17,8 +17,8 @@ Deploy the Orca headless server to a private EC2 instance behind CloudFront and 
 This project deploys the headless server (`orca-ide serve`) of [Orca](https://github.com/stablyai/orca), an orchestrator for AI coding agents, to a private EC2 instance with AWS CDK or Terraform. You open it from a browser over CloudFront HTTPS, and a browser is all you need. The structure and the security design follow [ec2_vscode](https://github.com/whchoi98/ec2_vscode).
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/infographic/build/01-access-path-en_16x9_dark.png">
-  <img src="docs/infographic/build/01-access-path-en_16x9_light.png" alt="Access path and protection layers: the browser, CloudFront with the password gate function and KeyValueStore, the ALB that checks the X-Custom-Secret header, and orca-serve on a private EC2 instance, with the two access steps and where each secret is kept">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/infographic/build/05-architecture-en_16x9_dark.png">
+  <img src="docs/infographic/build/05-architecture-en_16x9_light.png" alt="Architecture in detail: the access path from the browser through CloudFront, the ALB and the listener rules to orca-serve on a private EC2 instance, the password gate with its KeyValueStore and the header value in Secrets Manager, the deployment and pairing link path through CloudFormation, Lambda and Systems Manager, and the outbound path through the NAT Gateway, with the six steps from deployment to access, the differences between the two deployment modes, the values set in the code and the access limits at each boundary">
 </picture>
 
 Access takes two steps. The CloudFront password gate asks for the access password, and then Orca pairing approves each browser as a device. The origin accepts only CloudFront: the ALB admits the CloudFront prefix list and a random `X-Custom-Secret` header, and the EC2 instance sits in a private subnet.
@@ -211,8 +211,8 @@ This project does not include a LICENSE file. No license has been chosen.
 이 프로젝트는 AI 코딩 에이전트 오케스트레이터인 [Orca](https://github.com/stablyai/orca)의 headless 서버(`orca-ide serve`)를 AWS CDK 또는 Terraform으로 Private EC2에 배포합니다. 브라우저에서 CloudFront HTTPS로 접속하고 브라우저만 있으면 됩니다. 구조와 보안 설계는 [ec2_vscode](https://github.com/whchoi98/ec2_vscode)를 따릅니다.
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/infographic/build/01-access-path_16x9_dark.png">
-  <img src="docs/infographic/build/01-access-path_16x9_light.png" alt="접속 경로와 보호 계층: 브라우저, 암호 게이트 함수와 KeyValueStore가 있는 CloudFront, X-Custom-Secret 헤더를 확인하는 ALB, Private EC2의 orca-serve, 그리고 접속 두 단계와 비밀 값의 보관 위치">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/infographic/build/05-architecture_16x9_dark.png">
+  <img src="docs/infographic/build/05-architecture_16x9_light.png" alt="상세 아키텍처: 브라우저에서 CloudFront, ALB, 리스너 규칙을 거쳐 Private EC2의 orca-serve에 이르는 접속 경로, 암호 게이트와 KeyValueStore, Secrets Manager의 헤더 값, CloudFormation과 Lambda와 Systems Manager를 거치는 배포와 페어링 링크 조회 경로, NAT Gateway로 나가는 경로, 그리고 배포부터 접속까지의 여섯 단계와 두 배포 방식의 차이, 코드에 정한 값, 경계별 접근 제한">
 </picture>
 
 접속은 두 단계입니다. CloudFront 암호 게이트가 접속 암호를 확인하고 그다음에 Orca 페어링이 브라우저마다 디바이스 승인을 합니다. 오리진은 CloudFront만 받습니다. ALB는 CloudFront prefix list와 랜덤 `X-Custom-Secret` 헤더만 통과시키고 EC2는 Private Subnet에 있습니다.

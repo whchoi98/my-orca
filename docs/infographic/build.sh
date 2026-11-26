@@ -23,6 +23,7 @@ PAGES=(
     deploy_modes:02-deploy-modes deploy_modes_en:02-deploy-modes-en
     first_access:03-first-access first_access_en:03-first-access-en
     upgrade_flow:04-upgrade-flow upgrade_flow_en:04-upgrade-flow-en
+    architecture:05-architecture architecture_en:05-architecture-en
 )
 FILTER="${1:-}"
 SPECS=()

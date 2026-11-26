@@ -52,7 +52,7 @@ docs/api-reference.md   접속 암호 게이트의 HTTP 경로와 커스텀 리�
 docs/onboarding.md      처음 작업하는 사람을 위한 안내
 docs/runbooks/          런북. upgrade-orca.md(Orca 업그레이드)
 docs/decisions/         ADR. 지금은 템플릿만 있음
-docs/infographic/       문서에 넣은 그림 네 개의 소스와 결과물(build/). 한국어판과 영어판, 다크와 라이트
+docs/infographic/       문서에 넣은 그림 다섯 개의 소스와 결과물(build/). 한국어판과 영어판, 다크와 라이트
 orca/                   분석용 upstream clone. 추적하지 않음
 ```
 
@@ -108,7 +108,7 @@ bash deploy_orca_tf.sh --attach <호스트 스택> --plan
 bash deploy_orca_tf.sh --attach <호스트 스택> --yes                          # 승인을 받은 뒤
 bash deploy_orca_tf.sh --attach <호스트 스택> --orca-version <버전> --yes    # Terraform 배포의 업그레이드
 
-# 문서의 그림 다시 만들기 (검사 결과가 0건이어야 함). 이름의 앞부분으로 고를 수 있음: 01, 02, 03, 04
+# 문서의 그림 다시 만들기 (검사 결과가 0건이어야 함). 이름의 앞부분으로 고를 수 있음: 01, 02, 03, 04, 05
 docs/infographic/build.sh
 
 # 접속 암호 변경, 스택 삭제 (승인을 받은 뒤). Terraform 배포는 --tf <dedicated|attach>를 붙임

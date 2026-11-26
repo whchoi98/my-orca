@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add numbered menus to both deployment scripts for the region, the VPC (a new one or one of the VPCs in the account) and the instance type, with a check of the subnets of an existing VPC before the deployment
 - Add four figures to the README, the architecture document and the upgrade runbook: access path and protection layers, the two deployment modes, the first access procedure and the upgrade procedure
 - Add the `install-orca` skill for Claude Code, which checks the tools and the account, asks for the deployment choices, shows what will be created and deploys after approval
+- Add a detailed architecture figure to the README and the architecture document: twenty components on one map with the access path, the password gate, the deployment path and the outbound path
 
 ### Changed
 
@@ -73,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 두 배포 스크립트에 리전, VPC(새로 만들기 또는 계정의 기존 VPC), 인스턴스 타입을 고르는 번호 메뉴 추가. 기존 VPC는 배포 전에 서브넷을 확인
 - README, 아키텍처 문서, 업그레이드 런북에 그림 네 개(접속 경로와 보호 계층, 두 가지 배포 방식, 첫 접속 절차, 업그레이드 절차) 추가
 - 도구와 계정을 확인하고 배포 선택을 받은 뒤 만들 리소스를 보여 주고 승인을 받아 배포하는 Claude Code용 `install-orca` 스킬 추가
+- README와 아키텍처 문서에 상세 아키텍처 그림 추가. 구성 요소 스무 개를 한 장에 놓고 접속 경로, 암호 게이트, 배포 경로, 밖으로 나가는 경로를 표시
 
 ### Changed
 
