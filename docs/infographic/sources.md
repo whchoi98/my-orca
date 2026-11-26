@@ -19,7 +19,7 @@
 | 설정 서비스 | 암호 8자 이상, 코드 오입력 20회에서 423 | `infra-cdk/lib/gate/setup_service.py`의 `MIN_LENGTH`, `MAX_FAILURES` |
 | 설정 코드 | 암호가 없을 때만 만들고 root 전용 파일에 보관, 암호를 정하면 삭제 | `infra-cdk/lib/gate/install.sh`, `infra-cdk/lib/gate/setup_service.py` |
 | 암호 변경과 세션 | 기본은 서명 키를 새로 만들어 기존 세션 만료, `--keep-sessions`는 유지 | `set_password.sh` |
-| 기존 서버에 추가할 때 더하는 것 | 리스너 규칙 2개, 보안 그룹 규칙 2개, 역할 정책 1개 | `infra-cdk/lib/orca-attach-stack.ts`, `README.md` |
+| 기존 서버에 추가할 때 더하는 것 | 리스너 규칙 2개, 보안 그룹 규칙 2개, 역할 정책 1개 | `infra-cdk/lib/orca-attach-stack.ts`, `docs/deployment.md` |
 | 기존 서버 설치 | SSM Run Command, `rpm -Uvh --nodeps --oldpackage`, `orca-serve`만 재시작, 상태 확인 | `infra-cdk/lib/host/install_orca.sh`, `infra-cdk/lib/host/handler.py` |
 | 배포 전 점검 | 호스트 ALB의 열린 규칙, 리스너 HTTP:80, 우선순위 5와 10, SSM 온라인 | `deploy_orca.sh` |
 

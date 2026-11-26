@@ -11,7 +11,7 @@ my-orca는 Orca(AI 코딩 에이전트 오케스트레이터)의 headless 서버
 
 Terraform으로는 `bash deploy_orca_tf.sh`(전용 서버, `infra-tf/dedicated`)와 `bash deploy_orca_tf.sh --attach <호스트 스택>`(기존 서버에 추가, `infra-tf/attach`)으로 같은 것을 만듭니다. 한 서버에는 CDK 스택과 Terraform 배포 가운데 하나만 붙입니다.
 
-사용법과 운영 절차의 원본은 `README.md`이고, 전체 구조는 `docs/architecture.md`에 있습니다. 같은 내용을 이 파일에 옮겨 적지 않습니다.
+사용법과 운영 절차의 원본은 `docs/`의 안내 문서(`docs/deployment.md`, `docs/terraform.md`, `docs/usage.md`, `docs/configuration.md`)입니다. `README.md`에는 요약과 포인터만 둡니다. 전체 구조는 `docs/architecture.md`에 있습니다. 같은 내용을 이 파일에 옮겨 적지 않습니다.
 
 ## Tech Stack
 
@@ -41,6 +41,11 @@ scripts/                작업 환경 준비(setup.sh), git 훅 설치(install-h
 tests/                  하네스 시험(훅, 설정, 구조, 문서의 포인터). bash tests/run-all.sh
 tools/prompts/          프롬프트를 둘 자리(지금은 비어 있음)
 .claude/                Claude Code 설정(settings.json), 훅, 스킬, 명령, 에이전트
+docs/deployment.md      배포 안내. 배포가 만드는 것, 보안 기능, 전용 서버, 기존 서버에 추가, 삭제
+docs/terraform.md       Terraform 배포. 명령, CDK 배포와 다른 점, 옵션과 변수
+docs/usage.md           접속과 운영. 페어링 링크, 접속 암호, 에이전트 설정, 운영, 업그레이드, 알려진 제약
+docs/configuration.md   환경 설정 참조. 환경 변수, 스택 파라미터, CDK context, 출력, IAM 역할, 암호 게이트의 경로
+docs/development.md     전체 프로젝트 구조와 테스트 묶음
 docs/architecture.md    전체 구조와 Mermaid 그림(영어와 한국어)
 docs/reference/         층별 구현 참조(iac, security)
 docs/api-reference.md   접속 암호 게이트의 HTTP 경로와 커스텀 리소스의 속성
@@ -69,6 +74,7 @@ orca/                   분석용 upstream clone. 추적하지 않음
 - 전용 서버의 UserData는 `infra-cdk/lib/orca-stack.ts`와 `infra-tf/dedicated/user_data.sh.tftpl` 두 곳에 있고 같은 내용이어야 합니다. 스택 코드를 바꾸면 Terraform 코드에도 같은 변경을 넣습니다
 - 자산 디렉터리(`infra-cdk/lib/host/`, `infra-cdk/lib/pairing/`, `infra-cdk/lib/gate/`)에는 문서 파일을 두지 않습니다. 파일이 늘면 자산 해시가 바뀌어 다음 배포에서 Lambda가 갱신되고 서버에서 설치가 다시 실행됩니다. Terraform 배포도 `infra-cdk/lib/gate/`를 묶어 올리고 `infra-cdk/lib/host/`의 스크립트 해시로 재설치를 정합니다
 - 커스텀 리소스가 돌려주는 속성 값은 ASCII로 씁니다. CloudFormation이 한글을 `?`로 바꿉니다
+- `README.md`는 짧게 둡니다(400줄 이하, `bash tests/run-all.sh structure`가 검사). 자세한 내용은 `docs/`의 안내 문서에 넣고 README에서는 가리킵니다. README와 안내 문서는 영어와 한국어 두 구역을 같은 구조로 씁니다
 - 문서의 그림은 `docs/infographic/`의 Python 모듈로 그립니다(aws-infographic 스킬의 `infokit.py`, `buildkit.py`). 그림에는 코드나 실행으로 확인한 값만 적고 근거를 `docs/infographic/sources.md`에 남깁니다. 영어 구역에는 영어판(`-en`), 한국어 구역에는 한국어판을 넣습니다
 
 ## Key Commands
@@ -122,7 +128,7 @@ bash cleanup.sh --tf attach
 - Terraform의 전용 서버 구성(`infra-tf/dedicated`)은 실제로 두 번 배포해 확인하고 지웠습니다(2026-11-23, 새 VPC와 기존 VPC). 기존 서버에 추가하는 구성(`infra-tf/attach`)은 적용해 본 적이 없습니다. 읽기 전용 `terraform plan`, 가짜 provider의 계획 시험, 같은 모양의 로컬 구성으로 본 설치와 제거의 실행 시점까지만 확인했습니다
 - 배포가 있는 구성 디렉터리에는 저장된 입력 값(`orca.auto.tfvars.json`)과 상태 파일이 있습니다. 그 디렉터리에서 `terraform test`를 실행해도 되도록 시험 파일은 모든 변수를 스스로 정합니다
 - 새 Orca 버전으로 올리기 전에 RPM의 의존성, `serve` 옵션, 로그 문구가 그대로인지 확인합니다. 순서는 `docs/runbooks/upgrade-orca.md`에 있습니다
-- `/deploy`, `/test-all`, `/review` 명령과 `project-review`, `sync-docs`, `refactor`, `release` 스킬이 위 절차를 담고 있습니다
+- `/deploy`, `/test-all`, `/review` 명령과 `project-review`, `sync-docs`, `refactor`, `release` 스킬이 위 절차를 담고 있습니다. 처음 설치는 `install-orca` 스킬이 안내합니다. 도구와 계정을 확인하고 선택을 받은 뒤 승인을 받아 배포합니다
 
 ---
 
@@ -144,12 +150,12 @@ Plan 모드(`/plan`)를 나와 구현을 시작하기 전에:
 
 | 바꾼 것 | 함께 수정할 문서 |
 |---|---|
-| 스택 코드(`infra-cdk/lib/orca-stack.ts`, `infra-cdk/lib/orca-attach-stack.ts`, `infra-cdk/lib/orca-front-door.ts`) | `docs/architecture.md`의 Infrastructure 표, `docs/reference/iac.md`, `README.md`의 환경 설정. 같은 변경을 `infra-tf/`에도 넣음 |
-| Terraform 코드(`infra-tf/`) | `docs/reference/iac.md`, `README.md`의 Terraform 설명과 비교 표, `infra-tf/CLAUDE.md`. 같은 변경을 `infra-cdk/lib/`에도 넣음 |
-| 접속 암호 게이트(`infra-cdk/lib/functions/`, `infra-cdk/lib/gate/`) | `docs/api-reference.md`, `docs/reference/security.md`, `README.md`의 보안 기능 |
-| 기존 서버 설치 코드(`infra-cdk/lib/host/`) | `docs/runbooks/upgrade-orca.md`, `README.md`의 업그레이드 설명 |
-| 페어링 출력(`infra-cdk/lib/pairing/`) | `README.md`의 스택 출력 설명, `docs/api-reference.md` |
-| 루트의 운영 스크립트 | `README.md`의 사용법과 환경 설정 표(영어와 한국어 두 구역), 이 파일의 Key Commands |
+| 스택 코드(`infra-cdk/lib/orca-stack.ts`, `infra-cdk/lib/orca-attach-stack.ts`, `infra-cdk/lib/orca-front-door.ts`) | `docs/architecture.md`의 Infrastructure 표, `docs/reference/iac.md`, `docs/configuration.md`(파라미터, context, 출력), `docs/deployment.md`의 구성 요소. 같은 변경을 `infra-tf/`에도 넣음 |
+| Terraform 코드(`infra-tf/`) | `docs/reference/iac.md`, `docs/terraform.md`(설명, 비교 표, 옵션과 변수), `infra-tf/CLAUDE.md`. 같은 변경을 `infra-cdk/lib/`에도 넣음 |
+| 접속 암호 게이트(`infra-cdk/lib/functions/`, `infra-cdk/lib/gate/`) | `docs/api-reference.md`, `docs/reference/security.md`, `docs/deployment.md`의 보안 기능, `docs/configuration.md`의 암호 게이트 경로 |
+| 기존 서버 설치 코드(`infra-cdk/lib/host/`) | `docs/runbooks/upgrade-orca.md`, `docs/usage.md`의 업그레이드 설명 |
+| 페어링 출력(`infra-cdk/lib/pairing/`) | `docs/usage.md`의 스택 출력 설명, `docs/configuration.md`의 출력 표, `docs/api-reference.md` |
+| 루트의 운영 스크립트 | `README.md`의 요약, 안내 문서(`docs/deployment.md`, `docs/terraform.md`, `docs/usage.md`, `docs/configuration.md`. 영어와 한국어 두 구역), `.claude/skills/install-orca/SKILL.md`, 이 파일의 Key Commands |
 | `infra-cdk/package.json`의 버전 | 이 파일의 Tech Stack |
 | 그림에 적힌 값(포트, 상태 코드, 우선순위, 버전, 절차) | `docs/infographic/`의 장 모듈(`T`와 `T_EN`)과 `docs/infographic/sources.md`를 수정하고 `docs/infographic/build.sh`로 다시 만듦 |
 | 사용자에게 보이는 변경 | `CHANGELOG.md`의 `[Unreleased]`(영어와 한국어 두 구역) |

@@ -21,7 +21,7 @@ This runbook upgrades Orca on a stack made with `deploy_orca.sh --attach` (defau
 
 The Orca data under `~/.config/orca` and the access password are not touched by the install script. On 2026-11-22 the upgrade from 1.4.253 to 1.4.269 was done this way. Whether an already paired browser reconnects afterwards was not checked that day.
 
-The dedicated stack (OrcaServerStack) is not covered. Its `OrcaVersion` is used only by UserData, and the README describes the manual steps.
+The dedicated stack (OrcaServerStack) is not covered. Its `OrcaVersion` is used only by UserData, and `docs/usage.md` describes the manual steps.
 
 A deployment made with `deploy_orca_tf.sh --attach` (Terraform) is upgraded with the steps under [Terraform Deployment](#terraform-deployment). The chapters before it describe the CDK stack.
 
@@ -216,7 +216,7 @@ Run the server-side commands of the Verification chapter. In place of the stack 
 
 설치 스크립트는 `~/.config/orca` 아래의 Orca 데이터와 접속 암호를 건드리지 않습니다. 2026-11-22에 1.4.253에서 1.4.269로 이 방법으로 올렸습니다. 이미 페어링한 브라우저가 그 뒤에 다시 연결되는지는 그날 확인하지 않았습니다.
 
-전용 서버 스택(OrcaServerStack)은 다루지 않습니다. 그 스택의 `OrcaVersion`은 UserData에서만 쓰이고 수동 절차는 README에 있습니다.
+전용 서버 스택(OrcaServerStack)은 다루지 않습니다. 그 스택의 `OrcaVersion`은 UserData에서만 쓰이고 수동 절차는 `docs/usage.md`에 있습니다.
 
 `deploy_orca_tf.sh --attach`(Terraform)로 만든 배포는 [Terraform 배포](#terraform-배포) 챕터의 순서로 올립니다. 그 앞의 챕터는 CDK 스택을 다룹니다.
 

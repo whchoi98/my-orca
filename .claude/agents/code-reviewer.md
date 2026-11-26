@@ -13,7 +13,7 @@ my-orca 저장소(Orca headless 서버를 CloudFront와 ALB 뒤의 Private EC2�
 2. 변경을 가져옵니다(`git diff`, `git diff --cached`, 또는 받은 범위). git 저장소가 아니면 받은 파일을 읽습니다.
 3. 바뀐 파일마다 확인합니다.
    - 프로젝트 관례: 페어링 링크, 설정 코드, 접속 암호, 헤더 비밀값이 코드, 문서, 로그 출력에 없는지. 환경 식별 값이 없는지. 기존 서버 설치 코드가 `orca-serve`와 `orca-gate-setup` 말고 다른 것을 건드리지 않는지.
-   - 파일 사이의 일관성: Orca 버전의 기본값 네 곳(CDK 두 스택, `infra-tf/dedicated/variables.tf`, `infra-tf/attach/variables.tf`), 세 곳의 실행 의존 패키지 목록(`infra-cdk/lib/host/install_orca.sh`, `infra-cdk/lib/orca-stack.ts`, `infra-tf/dedicated/user_data.sh.tftpl`), CDK 스택과 Terraform 코드가 같은 구성을 만드는지, 운영 스크립트의 옵션과 README, 게이트의 상태 코드와 `docs/api-reference.md`.
+   - 파일 사이의 일관성: Orca 버전의 기본값 네 곳(CDK 두 스택, `infra-tf/dedicated/variables.tf`, `infra-tf/attach/variables.tf`), 세 곳의 실행 의존 패키지 목록(`infra-cdk/lib/host/install_orca.sh`, `infra-cdk/lib/orca-stack.ts`, `infra-tf/dedicated/user_data.sh.tftpl`), CDK 스택과 Terraform 코드가 같은 구성을 만드는지, 운영 스크립트의 옵션과 README, `docs/`의 안내 문서, 게이트의 상태 코드와 `docs/api-reference.md`.
    - Terraform 코드(`infra-tf/`): 설치 리소스(`terraform_data.host_install`)에 destroy 프로비저너가 없는지, 페어링 링크나 설정 코드가 출력이나 속성으로 상태 파일에 들어가지 않는지, `infra-tf/attach/tests/`의 시험이 계획만 계산하는지.
    - 배포에 미치는 영향: 커스텀 리소스의 속성 변화로 서버에서 설치가 다시 실행되는지, 실패했을 때 이전 속성으로 다시 실행하면 성공하는지, 기존 스택을 옵션 없이 다시 배포했을 때 설정이 바뀌는지.
    - 버그: 논리 오류, 빈 값 처리, 셸의 따옴표와 `read`의 공백 처리, `set -e`에서 끊기는 자리, 게이트를 지나치는 요청.

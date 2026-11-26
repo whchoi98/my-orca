@@ -23,7 +23,7 @@ description: 이 저장소의 변경을 CLAUDE.md의 관례에 비춰 검토하�
 - Orca 버전의 기본값이 네 곳에서 같은지(`infra-cdk/lib/orca-stack.ts`, `infra-cdk/lib/orca-attach-stack.ts`, `infra-tf/dedicated/variables.tf`, `infra-tf/attach/variables.tf`)
 - 실행 의존 패키지 목록이 `infra-cdk/lib/host/install_orca.sh`, `infra-cdk/lib/orca-stack.ts`, `infra-tf/dedicated/user_data.sh.tftpl`에서 같은지
 - 스택 코드(`infra-cdk/lib/`)를 바꿨으면 같은 변경이 Terraform 코드(`infra-tf/`)에도 들어갔는지, 그 반대도. 전용 서버의 UserData는 두 곳이 같은 내용이어야 합니다
-- 운영 스크립트의 옵션을 바꿨으면 README의 두 언어 구역과 `infra-cdk/test/upgrade_test.py`가 함께 바뀌었는지
+- 운영 스크립트의 옵션을 바꿨으면 README와 안내 문서(`docs/deployment.md`, `docs/terraform.md`, `docs/usage.md`, `docs/configuration.md`)의 두 언어 구역, `infra-cdk/test/upgrade_test.py`가 함께 바뀌었는지
 - 게이트의 경로, 상태 코드, 쿠키를 바꿨으면 `docs/api-reference.md`와 시험이 함께 바뀌었는지
 - 자산 디렉터리(`infra-cdk/lib/host/`, `infra-cdk/lib/pairing/`, `infra-cdk/lib/gate/`)에 코드가 아닌 파일이 들어가지 않았는지
 

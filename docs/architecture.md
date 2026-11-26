@@ -198,7 +198,7 @@ The figure compares what the two stacks create and how each one installs, upgrad
 | `infra-tf/modules/front-door` (both) | Random header value and its Secrets Manager secret, CloudFront KeyValueStore, CloudFront Function, S3 bucket with the bundle of `infra-cdk/lib/gate`, CloudFront distribution | Reads the function and the bundle from `infra-cdk/lib/` |
 | `infra-tf/modules/routes` (both) | Two target groups with their attachments, two listener rules | Same ports, health checks, conditions and default priorities as the CDK stacks |
 
-Resource names start with the variable `name` (default `orca-server`, or `orca-on-vscode` in attach mode). The options and variables are listed in the Configuration section of the [README](../README.md). A read-only `terraform plan` on 2026-11-22 showed 55 resources to add for the dedicated mode and 21 for the attach mode. Nothing was applied.
+Resource names start with the variable `name` (default `orca-server`, or `orca-on-vscode` in attach mode). The options and variables are listed in [terraform.md](terraform.md#options-and-variables). A read-only `terraform plan` on 2026-11-22 showed 55 resources to add for the dedicated mode and 21 for the attach mode. Nothing was applied.
 
 ### Deployed Resources
 - Checked on 2026-11-22: one attach stack, OrcaOnVscodeStack, in ap-northeast-2 on the host stack VscodeServerStack, with `OrcaVersion` 1.4.269 and both target groups healthy.
@@ -229,7 +229,7 @@ Resource names start with the variable `name` (default `orca-server`, or `orca-o
 
 ## Operations
 - Upgrading Orca on an attach stack or an attach deployment made with Terraform: [docs/runbooks/upgrade-orca.md](runbooks/upgrade-orca.md).
-- Deployment, pairing, password changes and deletion: the Usage section of the [README](../README.md).
+- Deployment and deletion: [deployment.md](deployment.md) and [terraform.md](terraform.md). Pairing, password changes and daily operations: [usage.md](usage.md).
 - Deployment with Terraform and its differences from CDK: the Deploy with Terraform part of the same section.
 - HTTP paths and status codes of the password gate: [docs/api-reference.md](api-reference.md).
 - Code pointers by layer: [docs/reference/INDEX.md](reference/INDEX.md).
@@ -430,7 +430,7 @@ flowchart LR
 | `infra-tf/modules/front-door` (두 구성 공용) | 무작위 헤더 값과 그 Secrets Manager 비밀값, CloudFront KeyValueStore, CloudFront Function, `infra-cdk/lib/gate` 묶음을 담은 S3 버킷, CloudFront 배포 | 함수와 묶음을 `infra-cdk/lib/`에서 읽음 |
 | `infra-tf/modules/routes` (두 구성 공용) | 대상 그룹 2개와 대상 등록, 리스너 규칙 2개 | 포트, 상태 확인, 조건, 기본 우선순위가 CDK 스택과 같음 |
 
-리소스 이름은 변수 `name`(기본값 `orca-server`, 기존 서버에 추가하는 구성은 `orca-on-vscode`)으로 시작합니다. 옵션과 변수는 [README](../README.md)의 환경 설정에 있습니다. 2026-11-22의 읽기 전용 `terraform plan`은 전용 서버 방식에 55개, 기존 서버에 추가하는 방식에 21개의 리소스를 만든다고 보여 줬습니다. 적용한 것은 없습니다.
+리소스 이름은 변수 `name`(기본값 `orca-server`, 기존 서버에 추가하는 구성은 `orca-on-vscode`)으로 시작합니다. 옵션과 변수는 [terraform.md](terraform.md#옵션과-변수)에 있습니다. 2026-11-22의 읽기 전용 `terraform plan`은 전용 서버 방식에 55개, 기존 서버에 추가하는 방식에 21개의 리소스를 만든다고 보여 줬습니다. 적용한 것은 없습니다.
 
 ### 배포된 리소스
 - 2026-11-22에 확인: 추가 스택 하나(OrcaOnVscodeStack)가 ap-northeast-2에서 호스트 스택 VscodeServerStack 위에 있고 `OrcaVersion`은 1.4.269이며 대상 그룹 둘이 모두 healthy입니다.
@@ -461,7 +461,7 @@ flowchart LR
 
 ## 운영
 - 추가 스택과 Terraform으로 추가한 배포의 Orca 업그레이드: [docs/runbooks/upgrade-orca.md](runbooks/upgrade-orca.md).
-- 배포, 페어링, 암호 변경, 삭제: [README](../README.md)의 사용법.
+- 배포와 삭제: [deployment.md](deployment.md#korean)와 [terraform.md](terraform.md#korean). 페어링, 암호 변경, 운영: [usage.md](usage.md#korean).
 - Terraform으로 하는 배포와 CDK 배포와 다른 점: 같은 구역의 Terraform으로 배포.
 - 암호 게이트의 HTTP 경로와 상태 코드: [docs/api-reference.md](api-reference.md).
 - 층별 코드 포인터: [docs/reference/INDEX.md](reference/INDEX.md).

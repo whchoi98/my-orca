@@ -130,7 +130,7 @@ class UpgradeScriptTest(unittest.TestCase):
         r = self.run_script("--yes", FAKE_HOST="None")
         self.assertEqual(r.returncode, 1)
         self.assertIsNone(self.deploy_args())
-        self.assertIn("README", r.stderr)
+        self.assertIn("docs/usage.md", r.stderr)
 
     def test_refuses_stack_without_orca_version(self):
         r = self.run_script("--yes", FAKE_CURRENT="None", FAKE_HOST="None")

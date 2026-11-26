@@ -48,7 +48,7 @@ read -r CURRENT HOST_STACK < <(aws cloudformation describe-stacks --stack-name "
 [ -n "${CURRENT:-}" ] || die "$STACK_NAME ($REGION) 스택을 찾지 못했습니다 (--stack-name, --region 확인)."
 [ "$CURRENT" != None ] || die "$STACK_NAME 에 OrcaVersion 파라미터가 없습니다 (Orca 스택이 아님)."
 if [ -z "${HOST_STACK:-}" ] || [ "$HOST_STACK" = None ]; then
-    die "$STACK_NAME 은 --attach 스택이 아닙니다. 전용 서버 스택은 README '운영 → Orca 업그레이드'의 수동 절차를 따르세요."
+    die "$STACK_NAME 은 --attach 스택이 아닙니다. 전용 서버 스택은 docs/usage.md의 'Orca 업그레이드'에 있는 수동 절차를 따르세요."
 fi
 
 if [ -n "$TARGET" ]; then

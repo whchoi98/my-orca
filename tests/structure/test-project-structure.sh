@@ -280,7 +280,7 @@ for ST_DIR in .claude/skills/*/; do
     [ "${#ST_DESC}" -ge 30 ] && pass "스킬 $ST_SKILL: description 있음 (${#ST_DESC}자)" \
         || fail "스킬 $ST_SKILL: description 있음" "너무 짧거나 없음"
 done
-for ST_SKILL in project-review refactor release sync-docs; do
+for ST_SKILL in project-review refactor release sync-docs install-orca; do
     assert_file_exists "스킬: $ST_SKILL" ".claude/skills/$ST_SKILL/SKILL.md"
 done
 [ -d .claude/skills/code-review ] && fail "스킬: 내장 /code-review를 가리지 않음" ".claude/skills/code-review가 있음" \
@@ -312,17 +312,42 @@ for ST_WORD in "deploy_orca" "upgrade_orca" "cleanup" "set_password" "get_pairin
                "terraform apply" "terraform destroy" "Bash(terraform:"; do
     assert_not_contains "명령 /deploy: $ST_WORD 를 미리 허용하지 않음" "$ST_ALLOWED" "$ST_WORD"
 done
+# 설치 스킬도 같다. 배포 명령을 미리 허용하지 않고, 암호와 페어링 링크가 세션에 남지 않게 실행한다
+ST_INSTALL=.claude/skills/install-orca/SKILL.md
+ST_ALLOWED=$(sed -n '2,/^---$/s/^allowed-tools: //p' "$ST_INSTALL")
+for ST_WORD in "deploy_orca" "cleanup" "set_password" "get_pairing_url" "npx cdk" "terraform" "Bash(bash:" "Bash(*)"; do
+    assert_not_contains "스킬 install-orca: $ST_WORD 를 미리 허용하지 않음" "$ST_ALLOWED" "$ST_WORD"
+done
+ST_BODY=$(cat "$ST_INSTALL")
+# CDK 배포의 출력에는 링크와 설정 코드가 있다. CLAUDE.md의 Key Commands와 같은 가리기 필터를 써야 한다
+ST_MASK=$(grep -m1 -F 's#(pairing=)' CLAUDE.md | sed 's/^ *//')
+[ -n "$ST_MASK" ] && pass "CLAUDE.md: 가리기 필터를 읽음" || fail "CLAUDE.md: 가리기 필터를 읽음" "Key Commands에 없음"
+assert_contains "스킬 install-orca: CLAUDE.md와 같은 가리기 필터" "$ST_BODY" "$ST_MASK"
+ST_DEPLOY_LINES=$(grep -E '^bash deploy_orca(_tf)?\.sh' "$ST_INSTALL" || true)
+[ "$(printf '%s\n' "$ST_DEPLOY_LINES" | st_count '^bash deploy_orca\.sh')" -ge 1 ] && pass "스킬 install-orca: CDK 배포 명령이 있음" \
+    || fail "스킬 install-orca: CDK 배포 명령이 있음" "bash deploy_orca.sh 로 시작하는 줄 없음"
+assert_eq "스킬 install-orca: CDK 배포 명령은 모두 필터로 이어짐" "0" \
+    "$(printf '%s\n' "$ST_DEPLOY_LINES" | grep -E '^bash deploy_orca\.sh' | grep -vcF '2>&1 | sed -u -E' || true)"
+# 세션의 셸에는 터미널 입력이 없다. 번호 메뉴와 암호 프롬프트로 들어가지 않게 --yes나 --plan을 붙인다
+assert_eq "스킬 install-orca: 배포 명령에 --yes 또는 --plan" "0" \
+    "$(printf '%s\n' "$ST_DEPLOY_LINES" | grep -vcE -- '--(yes|plan)( |$)' || true)"
+assert_not_contains "스킬 install-orca: 접속 암호를 명령에 넣지 않음" "$ST_BODY" "ORCA_WEB_PASSWORD="
+# 사용자가 직접 실행할 명령(페어링 링크 조회)을 스킬이 실행하라고 적지 않는다
+assert_contains "스킬 install-orca: 페어링 링크 조회는 사용자가 실행" "$ST_BODY" '`get_pairing_url.sh`는 실행하지 않습니다'
 
 # --- 문서가 있는지 ---
 for ST_FILE in docs/architecture.md docs/onboarding.md docs/api-reference.md docs/decisions/.template.md \
+               docs/deployment.md docs/terraform.md docs/usage.md docs/configuration.md docs/development.md \
                docs/runbooks/.template.md docs/runbooks/upgrade-orca.md docs/reference/INDEX.md \
                docs/reference/iac.md docs/reference/security.md; do
     assert_file_exists "문서: $ST_FILE" "$ST_FILE"
 done
 
 # --- 두 언어 문서: 두 구역의 구조가 같다 ---
+# README에서 옮긴 안내 문서(ST_GUIDES)도 README와 같은 두 언어 구조다
+ST_GUIDES="docs/deployment.md docs/terraform.md docs/usage.md docs/configuration.md docs/development.md"
 for ST_FILE in README.md CHANGELOG.md docs/architecture.md docs/decisions/.template.md docs/runbooks/.template.md \
-               docs/runbooks/*.md docs/reference/*.md; do
+               docs/runbooks/*.md docs/reference/*.md $ST_GUIDES; do
     ST_EN_LINE=$(grep -n -m1 '<a id="english"></a>' "$ST_FILE" | cut -d: -f1)
     ST_KO_LINE=$(grep -n -m1 '<a id="korean"></a>' "$ST_FILE" | cut -d: -f1)
     if [ -n "$ST_EN_LINE" ] && [ -n "$ST_KO_LINE" ] && [ "$ST_EN_LINE" -lt "$ST_KO_LINE" ]; then
@@ -364,7 +389,7 @@ assert_eq "README: 한국어 구역의 차례" \
     "개요|주요 기능|사전 요구 사항|설치 방법|사용법|환경 설정|프로젝트 구조|테스트|API 문서|기여 방법|라이선스|연락처|" \
     "$(st_section README.md korean | st_outside_code | sed -n 's/^## //p' | tr '\n' '|')"
 # 언어 전환은 ASCII 앵커를 쓴다. 한글 앵커(#한국어)는 GitHub 밖의 뷰어에서 동작하지 않는다
-for ST_FILE in README.md CHANGELOG.md docs/architecture.md; do
+for ST_FILE in README.md CHANGELOG.md docs/architecture.md $ST_GUIDES; do
     ST_HEAD_PART=$(sed '/<a id="english"><\/a>/q' "$ST_FILE")
     assert_contains "$ST_FILE: 언어 전환이 #english를 가리킴" "$ST_HEAD_PART" 'href="#english"'
     assert_contains "$ST_FILE: 언어 전환이 #korean을 가리킴" "$ST_HEAD_PART" 'href="#korean"'
@@ -375,20 +400,85 @@ ST_FEATURES=$(st_section README.md english | sed -n '/^## Features/,/^## Prerequ
 assert_eq "README: 형식이 다른 기능 항목이 없음" "0" "$(printf '%s\n' "$ST_FEATURES" | grep -vcE '^- \*\*[^*]+\*\* — ' || true)"
 grep -qxF '| Variable | Description | Default |' <<<"$(st_section README.md english)" && pass "README: 환경 설정 표의 머리줄" \
     || fail "README: 환경 설정 표의 머리줄" "'| Variable | Description | Default |' 줄이 없음"
-# README의 예시 명령이 가리키는 스크립트 옵션은 실제 스크립트에 있어야 한다
+# README, 안내 문서, 설치 스킬이 적은 명령의 옵션은 실제 스크립트에 있어야 한다.
+# 코드 블록의 줄뿐 아니라 문장과 표 안의 `bash set_password.sh --reset-ui` 같은 명령도 본다.
+# 스크립트 이름 뒤에서 백틱(인라인 코드의 끝), |(표의 칸과 파이프), #(주석)이 나오기 전까지가 그 명령이다.
 ST_MISSING=""
 while IFS= read -r ST_OPT; do
     [ -z "$ST_OPT" ] && continue
-    grep -qF -- "$ST_OPT" deploy_orca.sh deploy_orca_tf.sh upgrade_orca.sh cleanup.sh set_password.sh get_pairing_url.sh || ST_MISSING="$ST_MISSING $ST_OPT"
-done < <(st_section README.md english | grep -E '^(ORCA_WEB_PASSWORD=.* )?bash (deploy_orca|deploy_orca_tf|upgrade_orca|cleanup|set_password|get_pairing_url)\.sh' \
+    # 옵션 이름 전체가 맞아야 한다. --orca-ver가 --orca-version의 앞부분이라고 통과하면 안 된다
+    grep -qE -- "(^|[^a-z-])${ST_OPT}([^a-z-]|\$)" deploy_orca.sh deploy_orca_tf.sh upgrade_orca.sh cleanup.sh set_password.sh get_pairing_url.sh \
+        || ST_MISSING="$ST_MISSING $ST_OPT"
+done < <({ for ST_FILE in README.md $ST_GUIDES; do st_section "$ST_FILE" english; done; cat "$ST_INSTALL"; } \
+    | grep -oE '(deploy_orca|deploy_orca_tf|upgrade_orca|cleanup|set_password|get_pairing_url)\.sh[^`|#]*' \
     | grep -oE -- '--[a-z][a-z-]+' | sort -u)
-assert_eq "README: 예시 명령의 옵션이 스크립트에 모두 있음" "" "$ST_MISSING"
+assert_eq "README, 안내 문서, 설치 스킬: 예시 명령의 옵션이 스크립트에 모두 있음" "" "$ST_MISSING"
+# README는 짧게 둔다. 자세한 내용은 안내 문서에 두고 README는 그 문서를 가리킨다
+ST_README_LINES=$(wc -l < README.md)
+[ "$ST_README_LINES" -le 400 ] && pass "README: 400줄 이하 ($ST_README_LINES줄)" \
+    || fail "README: 400줄 이하" "$ST_README_LINES줄. 자세한 내용은 docs/의 안내 문서로 옮깁니다"
+for ST_FILE in $ST_GUIDES docs/architecture.md docs/runbooks/upgrade-orca.md; do
+    assert_contains "README: 영어 구역이 $ST_FILE 을 가리킴" "$(st_section README.md english)" "]($ST_FILE"
+    assert_contains "README: 한국어 구역이 $ST_FILE 을 가리킴" "$(st_section README.md korean)" "]($ST_FILE"
+done
+# 문서 사이의 링크가 가리키는 파일이 있어야 한다(같은 문서 안의 #앵커와 바깥 주소는 대상이 아니다)
+ST_MISSING=""
+for ST_FILE in README.md $ST_GUIDES; do
+    ST_BASE=$(dirname "$ST_FILE")
+    while IFS= read -r ST_LINK; do
+        [ -z "$ST_LINK" ] && continue
+        [ -e "$ST_BASE/${ST_LINK%%#*}" ] || ST_MISSING="$ST_MISSING $ST_FILE:$ST_LINK"
+    done < <(grep -oP '\]\(\K[^)#][^)]*(?=\))' "$ST_FILE" | grep -vE '^https?://' | sort -u)
+done
+assert_eq "README와 안내 문서: 링크가 가리키는 파일이 모두 있음" "" "$ST_MISSING"
+# 링크의 #앵커는 그 문서의 제목이나 <a id>여야 한다. 제목을 바꾸면 다른 문서의 링크가 조용히 끊기기 때문이다.
+# 제목의 앵커는 GitHub의 규칙으로 만든다(소문자, 글자와 숫자, 하이픈, 밑줄만 남기고 공백은 하이픈, 같은 이름은 -1, -2).
+ST_ANCHORS=$(python3 -I - README.md $ST_GUIDES docs/architecture.md <<'PYEOF' 2>&1 || true
+import os, re, sys
+
+
+def anchors(path):
+    found, seen, code = set(), {}, False
+    for line in open(path, encoding="utf-8"):
+        if line.startswith("```"):
+            code = not code
+            continue
+        if code:
+            continue
+        found.update(re.findall(r'<a id="([^"]+)">', line))
+        head = re.match(r"#{1,6} +(.*)", line)
+        if head:
+            slug = re.sub(r"[^\w\- ]", "", head.group(1).strip().lower()).replace(" ", "-")
+            count = seen.get(slug, 0)
+            seen[slug] = count + 1
+            found.add(slug if count == 0 else f"{slug}-{count}")
+    return found
+
+
+bad, cache = [], {}
+for doc in sys.argv[1:]:
+    text = open(doc, encoding="utf-8").read()
+    for target in set(re.findall(r"\]\(([^)\s]*#[^)\s]+)\)", text)):
+        if re.match(r"https?://", target):
+            continue
+        path, _, anchor = target.partition("#")
+        dest = os.path.normpath(os.path.join(os.path.dirname(doc), path)) if path else doc
+        if not os.path.isfile(dest):
+            continue  # 없는 파일은 위의 확인이 잡는다
+        if dest not in cache:
+            cache[dest] = anchors(dest)
+        if anchor not in cache[dest]:
+            bad.append(f"{doc}:{target}")
+print(" ".join(sorted(bad)))
+PYEOF
+)
+assert_eq "README와 안내 문서: 링크의 #앵커가 가리키는 제목이 있음" "" "$ST_ANCHORS"
 
 # --- 인포그래픽: 문서가 가리키는 그림이 있고, 언어와 테마의 짝이 맞는다 ---
 # 그림 경로는 그 문서가 있는 디렉터리 기준이다. 영어 구역은 영어판(-en), 한국어 구역은 같은 그림의 한국어판을 쓴다.
 st_images() { grep -oP '(?:src|srcset)="\K[^"]+(?=")' | grep -vE '^https?://' || true; }
 ST_FIG_DIR="docs/infographic/build"
-for ST_FILE in README.md docs/architecture.md docs/runbooks/upgrade-orca.md; do
+for ST_FILE in README.md docs/architecture.md docs/runbooks/upgrade-orca.md docs/deployment.md docs/usage.md; do
     ST_BASE=$(dirname "$ST_FILE")
     ST_EN_IMAGES=$(st_section "$ST_FILE" english | st_images)
     ST_KO_IMAGES=$(st_section "$ST_FILE" korean | st_images)
@@ -414,7 +504,7 @@ for ST_FILE in README.md docs/architecture.md docs/runbooks/upgrade-orca.md; do
         "$(printf '%s\n' "$ST_EN_IMAGES" | grep -v -- '-en_' | head -1)" || pass "$ST_FILE: 영어 구역은 영어판 그림만 씀"
     assert_eq "$ST_FILE: 그림의 alt 글이 비어 있지 않음" "0" "$(grep -c '<img [^>]*alt=""' "$ST_FILE" || true)"
 done
-assert_eq "README: 영어 구역의 그림은 넷" "4" "$(st_section README.md english | st_images | st_count '_light\.png$')"
+assert_eq "README: 영어 구역의 그림은 둘 (접속 경로, 첫 접속)" "2" "$(st_section README.md english | st_images | st_count '_light\.png$')"
 # 한국어로만 쓴 문서는 한국어판 그림을 쓴다
 for ST_FILE in docs/onboarding.md docs/api-reference.md; do
     ST_MISSING=""
@@ -442,7 +532,7 @@ assert_eq "인포그래픽: 그림마다 PNG와 SVG가 다크, 라이트로 있�
 assert_eq "인포그래픽: 한국어판마다 영어판이 있음" \
     "$(printf '%s\n' "$ST_SLUGS" | grep -v -- '-en$' | sed 's/$/-en/')" "$(printf '%s\n' "$ST_SLUGS" | grep -- '-en$')"
 # 문서가 쓰지 않는 그림이나, 문서에는 있는데 build.sh에 없는 그림이 없어야 한다
-ST_USED=$(cat README.md docs/architecture.md docs/runbooks/upgrade-orca.md docs/onboarding.md docs/api-reference.md | st_images \
+ST_USED=$(cat README.md docs/*.md docs/runbooks/upgrade-orca.md | st_images \
     | sed -E 's#.*/##; s/_16x9_(dark|light)\.png$//' | sort -u)
 assert_eq "인포그래픽: build.sh의 그림을 문서가 모두 씀" "$ST_SLUGS" "$ST_USED"
 # 한국어 글(T)과 영어 글(T_EN)은 같은 키와 같은 길이의 목록을 가진다(구조와 좌표를 함께 쓰기 때문이다)
@@ -511,7 +601,7 @@ assert_eq "INDEX.md: 가리키는 파일이 모두 있음" "" "$ST_MISSING"
 ST_PATH_EXCLUDE='(^|/)node_modules(/|$)|(^|/)cdk\.out(/|$)|cdk-outputs\.json$|cdk\.context\.json$|settings\.local\.json$|\.tfvars(\.json)?$|\.tfstate$|\.tfplan$|(^|/)\.terraform(/|$)|(^|/)\.build(/|$)|ADR-NNN|^feat/|^fix/|^stablyai/|^whchoi98/|^(text|application)/|^HTTP/|^[0-9.]+/[0-9]+$|^\.git/|^orca/$'
 st_paths() { grep -oP '`[^`]+`' "$1" | tr -d '`' | grep -P '^\.?[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)+/?$|^[A-Za-z0-9_-]+/$' \
     | grep -vE -- "$ST_PATH_EXCLUDE" | sort -u; }
-for ST_FILE in CLAUDE.md README.md docs/architecture.md docs/reference/*.md docs/onboarding.md docs/api-reference.md docs/runbooks/*.md \
+for ST_FILE in CLAUDE.md README.md docs/*.md docs/reference/*.md docs/runbooks/*.md \
                .claude/commands/*.md .claude/skills/*/SKILL.md .claude/agents/*.md; do
     ST_MISSING=""
     while IFS= read -r ST_PATH; do

@@ -1,11 +1,11 @@
 ---
 name: sync-docs
-description: 이 저장소의 문서(루트와 모듈의 CLAUDE.md, docs/architecture.md, docs/reference/, docs/api-reference.md, 런북, README, CHANGELOG)를 지금 코드와 맞추고 CLAUDE.md의 품질을 점수로 냅니다. 코드를 크게 바꾼 뒤나 문서를 맞춰 달라는 요청에 씁니다.
+description: 이 저장소의 문서(루트와 모듈의 CLAUDE.md, docs/architecture.md, docs/reference/, docs/api-reference.md, 런북, README와 안내 문서, CHANGELOG)를 지금 코드와 맞추고 CLAUDE.md의 품질을 점수로 냅니다. 코드를 크게 바꾼 뒤나 문서를 맞춰 달라는 요청에 씁니다.
 ---
 
 # 문서 동기화
 
-문서를 지금 코드와 맞춥니다. 사용법과 운영 절차의 원본은 `README.md`입니다. 같은 내용을 다른 문서에 옮겨 적지 않고 가리키기만 합니다.
+문서를 지금 코드와 맞춥니다. 사용법과 운영 절차의 원본은 안내 문서(`docs/deployment.md`, `docs/terraform.md`, `docs/usage.md`, `docs/configuration.md`, `docs/development.md`)이고 `README.md`는 요약과 포인터만 둡니다. 같은 내용을 다른 문서에 옮겨 적지 않고 가리키기만 합니다.
 
 ## 할 일
 
@@ -28,7 +28,7 @@ description: 이 저장소의 문서(루트와 모듈의 CLAUDE.md, docs/archite
 
 ### 4. docs/architecture.md
 - 구성 요소, Mermaid 그림, Infrastructure 표가 `infra-cdk/lib/`의 스택 코드와 맞는지 봅니다
-- CDK와 Terraform의 차이를 적은 자리(README의 비교 표, `docs/reference/iac.md`)가 `infra-tf/`의 코드와 맞는지 봅니다
+- CDK와 Terraform의 차이를 적은 자리(`docs/terraform.md`의 비교 표, `docs/reference/iac.md`)가 `infra-tf/`의 코드와 맞는지 봅니다
 - English와 한국어 구역의 구조, 표, 그림이 같은지 봅니다
 
 ### 5. docs/reference/와 docs/api-reference.md
@@ -36,8 +36,9 @@ description: 이 저장소의 문서(루트와 모듈의 CLAUDE.md, docs/archite
 - 게이트의 경로와 상태 코드를 `infra-cdk/lib/functions/password-gate.js`, `infra-cdk/lib/gate/setup_service.py`에서 다시 읽어 맞춥니다. 추측으로 적지 않습니다
 - 새 층이 생겼으면 `/add-reference-doc <layer>`로 더하고 `docs/reference/INDEX.md`를 수정합니다
 
-### 6. README와 런북
-- README의 두 언어 구역이 같은 구조인지, 예시 명령의 옵션이 스크립트에 있는지 봅니다
+### 6. README, 안내 문서, 런북
+- README와 안내 문서의 두 언어 구역이 같은 구조인지, 예시 명령의 옵션이 스크립트에 있는지 봅니다
+- README는 짧게 둡니다(400줄 이하, `bash tests/run-all.sh structure`가 검사). 자세한 내용은 안내 문서에 넣고 README에서는 가리킵니다
 - 런북의 절차를 수정할 때는 실제로 실행해 확인한 것과 확인하지 못한 것을 나눠 적고 "Last verified" 날짜를 바꿉니다
 
 ### 7. 확인

@@ -1,6 +1,6 @@
 # 작업 시작 안내
 
-이 저장소에서 처음 작업하는 사람과 Claude Code 세션을 위한 안내입니다. 작업 규칙의 원본은 루트의 `CLAUDE.md`입니다. 사용법(배포, 페어링, 암호, 삭제)은 README에 있습니다.
+이 저장소에서 처음 작업하는 사람과 Claude Code 세션을 위한 안내입니다. 작업 규칙의 원본은 루트의 `CLAUDE.md`입니다. 사용법은 README에 요약이 있고 자세한 내용은 `docs/deployment.md`(배포, 삭제), `docs/terraform.md`(Terraform 배포), `docs/usage.md`(페어링, 암호, 운영, 업그레이드), `docs/configuration.md`(환경 설정)에 있습니다.
 
 ## 빠른 시작
 
@@ -33,7 +33,7 @@ bash infra-tf/run-tests.sh      # Terraform 시험: 형식, 구성 검증, 가�
 
 ## 프로젝트 개요
 
-요청이 지나는 경로와 경계마다 확인하는 것을 그린 그림입니다. 배포 방식, 첫 접속 절차, 업그레이드 절차의 그림은 `README.md`와 `docs/architecture.md`, `docs/runbooks/upgrade-orca.md`에 있습니다.
+요청이 지나는 경로와 경계마다 확인하는 것을 그린 그림입니다. 배포 방식, 첫 접속 절차, 업그레이드 절차의 그림은 `README.md`, `docs/deployment.md`, `docs/usage.md`, `docs/architecture.md`, `docs/runbooks/upgrade-orca.md`에 있습니다.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="infographic/build/01-access-path_16x9_dark.png">

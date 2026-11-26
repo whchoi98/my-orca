@@ -11,7 +11,7 @@
 | `run-all.sh` | 실행기. `test-*.sh`를 찾아 source로 불러 실행하고 통과, 실패, 건너뜀을 셈 |
 | `hooks/test-hooks.sh` | 훅의 존재와 권한, 설정 등록, 승인을 묻는 명령 목록(CDK와 Terraform의 배포와 삭제), Terraform 상태 파일 읽기 거부, 훅의 실제 동작(문서 알림, 커밋 차단, 세션 맥락, 커밋 메시지 훅). 커밋 차단은 그 커밋에 들어갈 내용을 보는지 확인(인덱스의 사본, 경로를 준 커밋, 같은 줄의 `git add -f`, 커밋이 실행될 저장소). 문서 알림은 연결된 작업 트리의 파일과 세션마다 한 번만 하는 알림을 확인. project-init 3.1.0의 훅 계약(표식 둘, 검사기에 `exit 1` 없음)도 확인. 준비 스크립트(`scripts/setup.sh`)가 AWS를 부르지 않는지와 git이 추적하는 권한을 바꾸지 않는지도 확인 |
 | `hooks/test-secret-patterns.sh` | 비밀 값과 환경 식별 값 패턴의 검출과 오검출. 실제 검사기를 실행하고 패턴마다 표본이 있는지와 깨진 패턴을 통과시키지 않는지도 확인. 커밋하면 안 되는 경로(Terraform의 상태, 입력 값, 계획 파일 포함)를 내용과 상관없이 막는지 확인 |
-| `structure/test-project-structure.sh` | CLAUDE.md의 구역과 버전, 모듈 문서가 소스 파일을 모두 적는지, 자산 디렉터리, 기본 Orca 버전 네 곳과 패키지 목록 세 곳의 일치, 전용 서버의 UserData가 CDK 소스와 Terraform 템플릿에서 같은지, Terraform의 설치와 제거 리소스 구성, 운영 스크립트가 읽는 Terraform 출력, provider 잠금 파일과 CLAUDE.md의 버전, 스킬과 에이전트의 frontmatter, 두 언어 문서의 구조, 문서의 그림(파일이 있는지, 영어 구역은 영어판인지, 다크와 라이트의 짝, 두 언어 글의 구조가 같은지), 문서가 적은 경로, `.gitignore`의 동작 |
+| `structure/test-project-structure.sh` | CLAUDE.md의 구역과 버전, 모듈 문서가 소스 파일을 모두 적는지, 자산 디렉터리, 기본 Orca 버전 네 곳과 패키지 목록 세 곳의 일치, 전용 서버의 UserData가 CDK 소스와 Terraform 템플릿에서 같은지, Terraform의 설치와 제거 리소스 구성, 운영 스크립트가 읽는 Terraform 출력, provider 잠금 파일과 CLAUDE.md의 버전, 스킬과 에이전트의 frontmatter, 두 언어 문서의 구조(README와 `docs/`의 안내 문서 다섯 개 포함), README의 길이(400줄 이하)와 안내 문서로 가는 링크, 설치 스킬이 배포 명령을 미리 허용하지 않고 가리기 필터와 `--yes`를 쓰는지, 문서의 그림(파일이 있는지, 영어 구역은 영어판인지, 다크와 라이트의 짝, 두 언어 글의 구조가 같은지), 문서가 적은 경로, `.gitignore`의 동작 |
 | `fixtures/secret-samples.txt` | 검출해야 하는 표본. 접두어와 본문을 나눠 저장하고 실행할 때 합침 |
 | `fixtures/identifier-samples.txt` | 막아야 하는 환경 식별 값의 표본(지어낸 값) |
 | `fixtures/false-positives.txt` | 검출하면 안 되는 줄 |

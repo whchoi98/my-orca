@@ -17,7 +17,7 @@ allowed-tools: Read, Glob, Grep, Bash(git diff:*), Bash(git log:*), Bash(git sta
 
 바뀐 파일마다 `.claude/skills/project-review/SKILL.md`의 기준을 적용합니다.
 - 프로젝트 관례(비밀 값과 환경 식별 값, 기존 서버에서 건드리면 안 되는 것)
-- 파일 사이의 일관성(두 스택의 기본 버전, 두 곳의 패키지 목록, 스크립트 옵션과 README)
+- 파일 사이의 일관성(두 스택의 기본 버전, 두 곳의 패키지 목록, 스크립트 옵션과 README, `docs/`의 안내 문서)
 - 배포에 미치는 영향(설치가 다시 실행되는지, 실패했을 때 되돌릴 수 있는지)
 - 버그와 품질
 

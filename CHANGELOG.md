@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `--tf` to `get_pairing_url.sh`, `set_password.sh` and `cleanup.sh` so that they work on a Terraform deployment
 - Add numbered menus to both deployment scripts for the region, the VPC (a new one or one of the VPCs in the account) and the instance type, with a check of the subnets of an existing VPC before the deployment
 - Add four figures to the README, the architecture document and the upgrade runbook: access path and protection layers, the two deployment modes, the first access procedure and the upgrade procedure
+- Add the `install-orca` skill for Claude Code, which checks the tools and the account, asks for the deployment choices, shows what will be created and deploys after approval
 
 ### Changed
 
@@ -38,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keep the VPC and the instance type of a deployed dedicated server stack when `deploy_orca.sh` runs again, and stop when another VPC is given
 - Skip the SSM VPC endpoints without `--skip-vpc-endpoints` when the existing VPC already has them
 - Find the subnets of an existing VPC in `deploy_orca_tf.sh` when `--alb-subnets` and `--instance-subnet` are left out
+- Shorten the README to a summary and move the details to `docs/deployment.md`, `docs/terraform.md`, `docs/usage.md`, `docs/configuration.md` and `docs/development.md`
 
 ### Fixed
 
@@ -70,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Terraform 배포에서도 쓸 수 있도록 `get_pairing_url.sh`, `set_password.sh`, `cleanup.sh`에 `--tf` 옵션 추가
 - 두 배포 스크립트에 리전, VPC(새로 만들기 또는 계정의 기존 VPC), 인스턴스 타입을 고르는 번호 메뉴 추가. 기존 VPC는 배포 전에 서브넷을 확인
 - README, 아키텍처 문서, 업그레이드 런북에 그림 네 개(접속 경로와 보호 계층, 두 가지 배포 방식, 첫 접속 절차, 업그레이드 절차) 추가
+- 도구와 계정을 확인하고 배포 선택을 받은 뒤 만들 리소스를 보여 주고 승인을 받아 배포하는 Claude Code용 `install-orca` 스킬 추가
 
 ### Changed
 
@@ -79,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `deploy_orca.sh`를 다시 실행할 때 이미 배포한 전용 서버 스택의 VPC와 인스턴스 타입을 유지하고 다른 VPC를 주면 멈추도록 변경
 - 기존 VPC에 SSM VPC 엔드포인트가 이미 있으면 `--skip-vpc-endpoints` 없이도 생성을 생략하도록 변경
 - `deploy_orca_tf.sh`에서 `--alb-subnets`와 `--instance-subnet`을 주지 않으면 기존 VPC의 서브넷을 찾도록 변경
+- README를 요약으로 줄이고 자세한 내용을 `docs/deployment.md`, `docs/terraform.md`, `docs/usage.md`, `docs/configuration.md`, `docs/development.md`로 옮기도록 변경
 
 ### Fixed
 

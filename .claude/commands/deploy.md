@@ -7,7 +7,7 @@ allowed-tools: Read, Glob, Grep, Bash(bash tests/run-all.sh:*), Bash(npm test --
 
 실제 AWS 계정과 서버를 바꿉니다. `--attach` 스택은 Claude Code가 실행 중인 서버에 설치되어 있을 수 있습니다. 배포, 업그레이드, 암호 변경, 삭제 명령은 일부러 미리 허용하지 않았습니다. 명령마다 사용자가 승인합니다.
 
-$ARGUMENTS로 할 일을 고릅니다: `deploy`(코드 변경 반영), `upgrade`(Orca 버전 올리기). 스택 삭제와 암호 변경은 이 명령이 다루지 않습니다.
+$ARGUMENTS로 할 일을 고릅니다: `deploy`(코드 변경 반영), `upgrade`(Orca 버전 올리기). 스택 삭제와 암호 변경은 이 명령이 다루지 않습니다. 처음 설치는 `install-orca` 스킬이 다룹니다.
 
 배포 도구는 둘입니다. 대상이 CDK 스택이면 아래 단계를 그대로 따르고, Terraform 배포(`infra-tf/`)면 맨 아래 "Terraform 배포일 때"의 차이를 함께 적용합니다. 한 서버에는 둘 가운데 하나만 붙입니다.
 
@@ -44,7 +44,7 @@ $ARGUMENTS로 할 일을 고릅니다: `deploy`(코드 변경 반영), `upgrade`
 
 - 배포한 것(버전, 바뀐 리소스)과 확인한 결과
 - 확인하지 않은 것과 그 이유
-- 수정한 문서(`README.md`, `CHANGELOG.md`, `docs/runbooks/upgrade-orca.md`)
+- 수정한 문서(`README.md`, `docs/`의 안내 문서, `CHANGELOG.md`, `docs/runbooks/upgrade-orca.md`)
 
 ## 막혔을 때
 
